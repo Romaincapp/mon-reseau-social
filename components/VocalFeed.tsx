@@ -140,45 +140,6 @@ const VocalFeed: React.FC = () => {
     setPlayingPost(playingPost === postId ? null : postId);
   };
 
-  const handleTagChange = (tagName: string): void => {
-    setActiveTag(tagName);
-  };
-
-  // Compter les posts par tag
-  const getPostCountForTag = (tagName: string): number => {
-    if (tagName === 'Tout') return posts.length;
-    return posts.filter(post => 
-      post.post_tags?.some(postTag => postTag.tags.name === tagName)
-    ).length;
-  };
-
-  // Filtrer les posts selon le tag actif
-  const filteredPosts = posts.filter(post => {
-    if (activeTag === 'Tout') return true;
-    return post.post_tags?.some(postTag => postTag.tags.name === activeTag);
-  });
-
-  // Obtenir les tags populaires (les plus utilisés)
-  const getPopularTags = (): Tag[] => {
-    const tagCounts = new Map<string, { tag: Tag; count: number }>();
-    
-    posts.forEach(post => {
-      post.post_tags?.forEach(postTag => {
-        const tagName = postTag.tags.name;
-        if (tagCounts.has(tagName)) {
-          tagCounts.get(tagName)!.count++;
-        } else {
-          tagCounts.set(tagName, { tag: postTag.tags, count: 1 });
-        }
-      });
-    });
-
-    return Array.from(tagCounts.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6) // Top 6 tags
-      .map(item => item.tag);
-  };
-
   const Waveform: React.FC<WaveformProps> = ({ isPlaying }) => {
     const bars = Array.from({ length: 20 }, (_, i) => (
       <div
