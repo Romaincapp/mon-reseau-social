@@ -5,7 +5,7 @@ import { Heart, MessageCircle, Share2, Play, Pause, Home, Mic, User } from 'luci
 import { supabase } from '../lib/supabase';
 
 // Types TypeScript
-interface Category {
+interface Tag {
   id: number;
   name: string;
   emoji: string;
@@ -21,17 +21,23 @@ interface User {
   created_at: string;
 }
 
+interface PostTag {
+  id: string;
+  post_id: string;
+  tag_id: number;
+  tags: Tag;
+}
+
 interface Post {
   id: string;
   user_id: string;
-  category_id: number;
   audio_url: string;
   duration: number;
   likes_count: number;
   comments_count: number;
   created_at: string;
   users?: User;
-  categories?: Category;
+  post_tags?: PostTag[];
 }
 
 interface WaveformProps {
@@ -39,30 +45,31 @@ interface WaveformProps {
 }
 
 const VocalFeed: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<string>('Tout');
+  const [activeTag, setActiveTag] = useState<string>('Tout');
   const [playingPost, setPlayingPost] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Récupérer les catégories depuis Supabase
+  // Récupérer tous les tags depuis Supabase
   useEffect(() => {
-    const fetchCategories = async (): Promise<void> => {
+    const fetchTags = async (): Promise<void> => {
       try {
         const { data, error } = await supabase
-          .from('categories')
-          .select('*');
+          .from('tags')
+          .select('*')
+          .order('name');
         
         if (error) {
-          console.error('Erreur catégories:', error);
-          setError('Erreur lors du chargement des catégories');
+          console.error('Erreur tags:', error);
+          setError('Erreur lors du chargement des tags');
         } else {
-          const allCategories: Category[] = [
+          const allTagsWithAll: Tag[] = [
             { id: 0, name: 'Tout', emoji: '⭐', color: 'bg-purple-500' },
             ...(data || [])
           ];
-          setCategories(allCategories);
+          setAllTags(allTagsWithAll);
         }
       } catch (err) {
         console.error('Erreur inattendue:', err);
@@ -70,10 +77,10 @@ const VocalFeed: React.FC = () => {
       }
     };
 
-    fetchCategories();
+    fetchTags();
   }, []);
 
-  // Récupérer les posts depuis Supabase
+  // Récupérer les posts avec leurs tags depuis Supabase
   useEffect(() => {
     const fetchPosts = async (): Promise<void> => {
       try {
@@ -82,7 +89,12 @@ const VocalFeed: React.FC = () => {
           .select(`
             *,
             users (id, username, email, avatar_url, bio, created_at),
-            categories (id, name, emoji, color)
+            post_tags (
+              id,
+              post_id,
+              tag_id,
+              tags (id, name, emoji, color)
+            )
           `)
           .order('created_at', { ascending: false });
         
@@ -128,8 +140,43 @@ const VocalFeed: React.FC = () => {
     setPlayingPost(playingPost === postId ? null : postId);
   };
 
-  const handleCategoryChange = (categoryName: string): void => {
-    setActiveCategory(categoryName);
+  const handleTagChange = (tagName: string): void => {
+    setActiveTag(tagName);
+  };
+
+  // Compter les posts par tag
+  const getPostCountForTag = (tagName: string): number => {
+    if (tagName === 'Tout') return posts.length;
+    return posts.filter(post => 
+      post.post_tags?.some(postTag => postTag.tags.name === tagName)
+    ).length;
+  };
+
+  // Filtrer les posts selon le tag actif
+  const filteredPosts = posts.filter(post => {
+    if (activeTag === 'Tout') return true;
+    return post.post_tags?.some(postTag => postTag.tags.name === activeTag);
+  });
+
+  // Obtenir les tags populaires (les plus utilisés)
+  const getPopularTags = (): Tag[] => {
+    const tagCounts = new Map<string, { tag: Tag; count: number }>();
+    
+    posts.forEach(post => {
+      post.post_tags?.forEach(postTag => {
+        const tagName = postTag.tags.name;
+        if (tagCounts.has(tagName)) {
+          tagCounts.get(tagName)!.count++;
+        } else {
+          tagCounts.set(tagName, { tag: postTag.tags, count: 1 });
+        }
+      });
+    });
+
+    return Array.from(tagCounts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6) // Top 6 tags
+      .map(item => item.tag);
   };
 
   const Waveform: React.FC<WaveformProps> = ({ isPlaying }) => {
@@ -186,21 +233,47 @@ const VocalFeed: React.FC = () => {
         <p className="text-purple-200">Écoutez le monde</p>
       </div>
 
-      {/* Categories */}
+      {/* Tags populaires */}
       <div className="px-4 py-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Tags populaires</h2>
         <div className="flex space-x-3 overflow-x-auto pb-2">
-          {categories.map((category) => (
+          <button
+            onClick={() => handleTagChange('Tout')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
+              activeTag === 'Tout'
+                ? 'bg-purple-500 text-white shadow-lg'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <span className="text-lg animate-bounce">⭐</span>
+            <span className="font-medium">Tout</span>
+            <span className={`text-xs px-2 py-1 rounded-full ml-1 ${
+              activeTag === 'Tout' 
+                ? 'bg-white/20 text-white' 
+                : 'bg-gray-200 text-gray-600'
+            }`}>
+              {posts.length}
+            </span>
+          </button>
+          {getPopularTags().map((tag) => (
             <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.name)}
+              key={tag.id}
+              onClick={() => handleTagChange(tag.name)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
-                activeCategory === category.name
-                  ? `${category.color} text-white shadow-lg`
+                activeTag === tag.name
+                  ? `${tag.color} text-white shadow-lg`
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <span className="text-lg animate-bounce">{category.emoji}</span>
-              <span className="font-medium">{category.name}</span>
+              <span className="text-lg animate-bounce">{tag.emoji}</span>
+              <span className="font-medium">{tag.name}</span>
+              <span className={`text-xs px-2 py-1 rounded-full ml-1 ${
+                activeTag === tag.name 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {getPostCountForTag(tag.name)}
+              </span>
             </button>
           ))}
         </div>
@@ -213,15 +286,20 @@ const VocalFeed: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
             <p className="text-gray-500 mt-2">Chargement des vocaux...</p>
           </div>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">Aucun vocal trouvé</p>
+            <p className="text-gray-500">
+              {activeTag === 'Tout' 
+                ? 'Aucun vocal trouvé' 
+                : `Aucun vocal avec le tag "${activeTag}"`
+              }
+            </p>
           </div>
         ) : (
-          posts.map((post) => (
+          filteredPosts.map((post) => (
             <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
               {/* User Info */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xl">
                     {getRandomAvatar()}
@@ -231,9 +309,30 @@ const VocalFeed: React.FC = () => {
                     <p className="text-sm text-gray-500">{formatTimeAgo(post.created_at)}</p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${post.categories?.color || 'bg-gray-500'} animate-pulse`}>
-                  {post.categories?.name || 'Autre'}
+                <span className="text-sm font-medium text-gray-600">
+                  {formatDuration(post.duration)}
                 </span>
+              </div>
+
+              {/* Tags Netflix-style */}
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-1.5">
+                  {post.post_tags?.slice(0, 3).map((postTag, index) => (
+                    <button
+                      key={postTag.id}
+                      onClick={() => handleTagChange(postTag.tags.name)}
+                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:scale-105 ${postTag.tags.color} text-white min-w-fit`}
+                    >
+                      <span className="text-xs">{postTag.tags.emoji}</span>
+                      <span className="whitespace-nowrap">{postTag.tags.name}</span>
+                    </button>
+                  ))}
+                  {(post.post_tags?.length || 0) > 3 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-gray-100 text-gray-600">
+                      +{(post.post_tags?.length || 0) - 3}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Audio Player */}
