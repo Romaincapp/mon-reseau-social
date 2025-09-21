@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Play, Pause, Home, Mic, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useRouter } from 'next/navigation';
 
 // Types TypeScript
 interface Tag {
@@ -44,12 +45,15 @@ interface WaveformProps {
   isPlaying: boolean;
 }
 
+
+
 const VocalFeed: React.FC = () => {
+  const router = useRouter(); // Hook pour la navigation
   const [playingPost, setPlayingPost] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   // Récupérer les posts avec leurs tags depuis Supabase
   useEffect(() => {
     const fetchPosts = async (): Promise<void> => {
@@ -108,6 +112,16 @@ const VocalFeed: React.FC = () => {
 
   const handlePlay = (postId: string): void => {
     setPlayingPost(playingPost === postId ? null : postId);
+  };
+
+  // Fonction pour naviguer vers la page d'enregistrement
+  const handleMicClick = (): void => {
+    router.push('/record');
+  };
+
+  // Fonction pour naviguer vers le profil (optionnel)
+  const handleProfileClick = (): void => {
+    router.push('/profile');
   };
 
   const Waveform: React.FC<WaveformProps> = ({ isPlaying }) => {
@@ -201,7 +215,7 @@ const VocalFeed: React.FC = () => {
                     {post.post_tags.slice(0, 3).map((postTag) => (
                       <span
                         key={postTag.id}
-                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${postTag.tags.color} text-white`}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-500 text-white"
                       >
                         {postTag.tags?.emoji} {postTag.tags?.name}
                       </span>
@@ -270,16 +284,24 @@ const VocalFeed: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation avec bouton micro fonctionnel */}
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <button className="p-3 text-purple-500" aria-label="Accueil">
             <Home size={24} />
           </button>
-          <button className="p-3 text-gray-400 hover:text-purple-500 transition-colors duration-200" aria-label="Enregistrer">
+          <button 
+            onClick={handleMicClick}
+            className="p-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg transform hover:scale-105 transition-all duration-200" 
+            aria-label="Enregistrer"
+          >
             <Mic size={24} />
           </button>
-          <button className="p-3 text-gray-400 hover:text-purple-500 transition-colors duration-200" aria-label="Profil">
+          <button 
+            onClick={handleProfileClick}
+            className="p-3 text-gray-400 hover:text-purple-500 transition-colors duration-200" 
+            aria-label="Profil"
+          >
             <User size={24} />
           </button>
         </div>
