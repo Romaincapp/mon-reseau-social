@@ -45,40 +45,10 @@ interface WaveformProps {
 }
 
 const VocalFeed: React.FC = () => {
-  const [activeTag, setActiveTag] = useState<string>('Tout');
   const [playingPost, setPlayingPost] = useState<string | null>(null);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Récupérer tous les tags depuis Supabase
-  useEffect(() => {
-    const fetchTags = async (): Promise<void> => {
-      try {
-        const { data, error } = await supabase
-          .from('tags')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          console.error('Erreur tags:', error);
-          setError('Erreur lors du chargement des tags');
-        } else {
-          const allTagsWithAll: Tag[] = [
-            { id: 0, name: 'Tout', emoji: '⭐', color: 'bg-purple-500' },
-            ...(data || [])
-          ];
-          setAllTags(allTagsWithAll);
-        }
-      } catch (err) {
-        console.error('Erreur inattendue:', err);
-        setError('Erreur inattendue');
-      }
-    };
-
-    fetchTags();
-  }, []);
 
   // Récupérer les posts avec leurs tags depuis Supabase
   useEffect(() => {
@@ -194,70 +164,19 @@ const VocalFeed: React.FC = () => {
         <p className="text-purple-200">Écoutez le monde</p>
       </div>
 
-      {/* Tags populaires */}
-      <div className="px-4 py-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Tags populaires</h2>
-        <div className="flex space-x-3 overflow-x-auto pb-2">
-          <button
-            onClick={() => handleTagChange('Tout')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
-              activeTag === 'Tout'
-                ? 'bg-purple-500 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <span className="text-lg animate-bounce">⭐</span>
-            <span className="font-medium">Tout</span>
-            <span className={`text-xs px-2 py-1 rounded-full ml-1 ${
-              activeTag === 'Tout' 
-                ? 'bg-white/20 text-white' 
-                : 'bg-gray-200 text-gray-600'
-            }`}>
-              {posts.length}
-            </span>
-          </button>
-          {getPopularTags().map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => handleTagChange(tag.name)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 transform hover:scale-105 ${
-                activeTag === tag.name
-                  ? `${tag.color} text-white shadow-lg`
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <span className="text-lg animate-bounce">{tag.emoji}</span>
-              <span className="font-medium">{tag.name}</span>
-              <span className={`text-xs px-2 py-1 rounded-full ml-1 ${
-                activeTag === tag.name 
-                  ? 'bg-white/20 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                {getPostCountForTag(tag.name)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Loading ou Posts */}
-      <div className="px-4 space-y-4">
+      {/* Posts */}
+      <div className="px-4 py-6 space-y-4">
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
             <p className="text-gray-500 mt-2">Chargement des vocaux...</p>
           </div>
-        ) : filteredPosts.length === 0 ? (
+        ) : posts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">
-              {activeTag === 'Tout' 
-                ? 'Aucun vocal trouvé' 
-                : `Aucun vocal avec le tag "${activeTag}"`
-              }
-            </p>
+            <p className="text-gray-500">Aucun vocal trouvé</p>
           </div>
         ) : (
-          filteredPosts.map((post) => (
+          posts.map((post) => (
             <div key={post.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
               {/* User Info */}
               <div className="flex items-center justify-between mb-3">
@@ -275,26 +194,26 @@ const VocalFeed: React.FC = () => {
                 </span>
               </div>
 
-              {/* Tags Netflix-style */}
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-1.5">
-                  {post.post_tags?.slice(0, 3).map((postTag, index) => (
-                    <button
-                      key={postTag.id}
-                      onClick={() => handleTagChange(postTag.tags.name)}
-                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:scale-105 ${postTag.tags.color} text-white min-w-fit`}
-                    >
-                      <span className="text-xs">{postTag.tags.emoji}</span>
-                      <span className="whitespace-nowrap">{postTag.tags.name}</span>
-                    </button>
-                  ))}
-                  {(post.post_tags?.length || 0) > 3 && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-gray-100 text-gray-600">
-                      +{(post.post_tags?.length || 0) - 3}
-                    </span>
-                  )}
+              {/* Tags avec couleurs personnalisées */}
+              {post.post_tags && post.post_tags.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {post.post_tags.slice(0, 3).map((postTag) => (
+                      <span
+                        key={postTag.id}
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${postTag.tags.color} text-white`}
+                      >
+                        {postTag.tags?.emoji} {postTag.tags?.name}
+                      </span>
+                    ))}
+                    {(post.post_tags?.length || 0) > 3 && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-gray-100 text-gray-600">
+                        +{(post.post_tags?.length || 0) - 3}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Audio Player */}
               <div className="bg-gray-50 rounded-xl p-4 mb-4">
