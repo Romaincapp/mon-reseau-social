@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:memory:*)",
+      "Bash(code:*)",
+      "Bash(echo $APPDATA)",
+      "Bash(npx:*)",
+      "Read(//c/Users/Maison/AppData/Roaming/Claude/**)",
+      "WebSearch",
+      "Read(//c/Users/Maison/**)",
+      "Bash(find:*)",
+      "Bash(where claude)",
+      "Bash(claude mcp:*)",
+      "Bash(npm run build:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit - Application prête pour déploiement\n\n- Configuration Next.js 15 avec TypeScript\n- Authentification Supabase complète\n- Enregistrement audio avec filtres\n- Feed vocal avec player global\n- Système de profils et posts\n- Types TypeScript mis à jour\n- Build production validé\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

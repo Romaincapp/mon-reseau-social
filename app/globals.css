@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f8f7f5;
   --foreground: #171717;
+  --wave-color: #9b87f5;
 }
 
 @theme inline {
@@ -16,6 +17,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --wave-color: #7c3aed;
   }
 }
 
@@ -23,4 +25,79 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animation des ondes sonores de fond */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 48px,
+      var(--wave-color) 48px,
+      var(--wave-color) 50px
+    );
+  opacity: 0;
+  animation: wavePass 12s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes wavePass {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.03;
+  }
+  50% {
+    transform: translateX(100%);
+    opacity: 0.03;
+  }
+  60% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* S'assurer que le contenu est au-dessus de l'animation */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Animation pulse pour le titre Vocal */
+@keyframes soundPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.3),
+      0 0 20px rgba(255, 255, 255, 0.2),
+      0 0 30px rgba(255, 255, 255, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(255, 255, 255, 0.5),
+      0 0 30px rgba(255, 255, 255, 0.4),
+      0 0 40px rgba(255, 255, 255, 0.3),
+      0 0 50px rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+.vocal-pulse {
+  animation: soundPulse 2s ease-in-out infinite;
 }

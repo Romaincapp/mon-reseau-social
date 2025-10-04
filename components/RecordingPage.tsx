@@ -2,9 +2,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, Send, X, Check, ArrowLeft, Upload, Music } from 'lucide-react';
+import { Mic, Square, Play, Pause, Send, X, Check, ArrowLeft, Upload, Music, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { availableFilters, AudioFilterProcessor, type AudioFilter } from '@/lib/audioFilters';
 
 interface Tag {
   id: number;
@@ -15,6 +17,7 @@ interface Tag {
 
 const RecordingPage = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [mode, setMode] = useState<'record' | 'import'>('record');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -27,35 +30,58 @@ const RecordingPage = () => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [showTagSelector, setShowTagSelector] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<AudioFilter>(availableFilters[0]);
+  const [showFilterSelector, setShowFilterSelector] = useState(false);
+  const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const filterProcessorRef = useRef<AudioFilterProcessor | null>(null);
 
   // Tags Netflix-style disponibles
-  const availableTags: Tag[] = [
-    { id: 1, name: 'Comedy', emoji: '😂', color: 'bg-yellow-500' },
-    { id: 2, name: 'Drama', emoji: '🎭', color: 'bg-red-500' },
-    { id: 3, name: 'Chill', emoji: '🌙', color: 'bg-blue-500' },
-    { id: 4, name: 'Music', emoji: '🎵', color: 'bg-green-500' },
-    { id: 5, name: 'News', emoji: '📰', color: 'bg-gray-500' },
-    { id: 6, name: 'Story', emoji: '📖', color: 'bg-orange-500' },
-    { id: 7, name: 'Tech', emoji: '💻', color: 'bg-indigo-500' },
-    { id: 8, name: 'Travel', emoji: '✈️', color: 'bg-cyan-500' },
-    { id: 9, name: 'Food', emoji: '🍕', color: 'bg-pink-500' },
-    { id: 10, name: 'Sports', emoji: '⚽', color: 'bg-emerald-500' },
-    { id: 11, name: 'Love', emoji: '💕', color: 'bg-rose-500' },
-    { id: 12, name: 'Mystery', emoji: '🔮', color: 'bg-purple-500' },
-    { id: 13, name: 'Horror', emoji: '👻', color: 'bg-slate-500' },
-    { id: 14, name: 'Fitness', emoji: '💪', color: 'bg-lime-500' },
-    { id: 15, name: 'Education', emoji: '🎓', color: 'bg-amber-500' }
-  ];
+  // Dans components/RecordingPage.tsx - Remplace la section availableTags par :
 
-  // Initialiser le microphone
+const availableTags: Tag[] = [
+  // TES TAGS EXISTANTS - Émotionnels/Intentionnels ✨
+  { id: 1, name: 'Drôle', emoji: '😁', color: 'bg-yellow-500' },
+  { id: 2, name: 'Spontané', emoji: '⚡', color: 'bg-orange-500' },
+  { id: 3, name: 'Absurde', emoji: '🤪', color: 'bg-pink-500' },
+  { id: 4, name: 'Réflexion', emoji: '💭', color: 'bg-blue-500' },
+  { id: 5, name: 'Inspirant', emoji: '🌟', color: 'bg-purple-500' },
+  { id: 6, name: 'Profond', emoji: '🎯', color: 'bg-indigo-500' },
+  { id: 7, name: 'Personnel', emoji: '👤', color: 'bg-green-500' },
+  { id: 8, name: 'Travail', emoji: '💼', color: 'bg-gray-600' },
+  { id: 9, name: 'Voyage', emoji: '✈️', color: 'bg-sky-500' },
+  { id: 10, name: 'Émouvant', emoji: '❤️', color: 'bg-red-500' },
+  { id: 11, name: 'Relaxant', emoji: '🧘', color: 'bg-teal-500' },
+  { id: 12, name: 'Énergique', emoji: '🔥', color: 'bg-red-600' },
+  { id: 13, name: 'Histoire', emoji: '📚', color: 'bg-amber-600' },
+  { id: 14, name: 'Conseil', emoji: '💡', color: 'bg-yellow-600' },
+  { id: 15, name: 'Question', emoji: '❓', color: 'bg-slate-500' },
+
+  // AJOUTS COMPLÉMENTAIRES 🚀
+  { id: 16, name: 'Musique', emoji: '🎵', color: 'bg-emerald-500' },
+  { id: 17, name: 'Nostalgique', emoji: '🌅', color: 'bg-rose-400' },
+  { id: 18, name: 'Mystérieux', emoji: '🔮', color: 'bg-violet-500' },
+  { id: 19, name: 'Débat', emoji: '🤔', color: 'bg-stone-500' },
+  { id: 20, name: 'Actualités', emoji: '📰', color: 'bg-slate-600' },
+  { id: 21, name: 'Fitness', emoji: '💪', color: 'bg-lime-500' },
+  { id: 22, name: 'Sport', emoji: '⚽', color: 'bg-emerald-600' }
+];
+
+  // Initialiser le microphone et le processeur de filtres
   useEffect(() => {
     checkMicrophonePermission();
+    filterProcessorRef.current = new AudioFilterProcessor();
+
+    return () => {
+      if (filterProcessorRef.current) {
+        filterProcessorRef.current.dispose();
+      }
+    };
   }, []);
 
   const checkMicrophonePermission = async () => {
@@ -107,15 +133,25 @@ const RecordingPage = () => {
     }
 
     setImportedFile(file);
-    
+
     // Créer un blob à partir du fichier pour la compatibilité
     setAudioBlob(file);
 
-    // Obtenir la durée du fichier audio
+    // Obtenir la durée du fichier audio et charger pour les filtres
     const audio = new Audio();
     audio.src = URL.createObjectURL(file);
-    audio.onloadedmetadata = () => {
+    audio.onloadedmetadata = async () => {
       setAudioDuration(Math.floor(audio.duration));
+
+      // Charger l'audio pour les filtres
+      if (filterProcessorRef.current) {
+        try {
+          const buffer = await filterProcessorRef.current.loadAudioFromBlob(file);
+          setAudioBuffer(buffer);
+        } catch (error) {
+          console.error('Error loading audio buffer:', error);
+        }
+      }
     };
   };
 
@@ -136,10 +172,22 @@ const RecordingPage = () => {
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+        console.log('🎤 Audio blob créé:', blob);
         setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
+
+        // Charger l'audio pour les filtres
+        if (filterProcessorRef.current) {
+          try {
+            const buffer = await filterProcessorRef.current.loadAudioFromBlob(blob);
+            console.log('🎵 Audio buffer chargé pour filtres:', buffer);
+            setAudioBuffer(buffer);
+          } catch (error) {
+            console.error('❌ Error loading audio buffer:', error);
+          }
+        }
       };
 
       mediaRecorder.start();
@@ -173,7 +221,16 @@ const RecordingPage = () => {
   };
 
   const playAudio = () => {
-    if (audioBlob && audioRef.current) {
+    // Utiliser le filtre si disponible
+    if (audioBuffer && filterProcessorRef.current) {
+      filterProcessorRef.current.playWithFilter(
+        audioBuffer,
+        selectedFilter.id,
+        () => setIsPlaying(false)
+      );
+      setIsPlaying(true);
+    } else if (audioBlob && audioRef.current) {
+      // Fallback sur le lecteur HTML5 classique
       const audioUrl = URL.createObjectURL(audioBlob);
       audioRef.current.src = audioUrl;
       audioRef.current.play();
@@ -186,10 +243,14 @@ const RecordingPage = () => {
   };
 
   const pauseAudio = () => {
+    // Arrêter le filtre processor ou le lecteur HTML5
+    if (filterProcessorRef.current) {
+      filterProcessorRef.current.stop();
+    }
     if (audioRef.current) {
       audioRef.current.pause();
-      setIsPlaying(false);
     }
+    setIsPlaying(false);
   };
 
   const toggleTag = (tag: Tag) => {
@@ -221,28 +282,52 @@ const RecordingPage = () => {
       return;
     }
 
+    if (!user) {
+      alert('Vous devez être connecté pour publier un vocal');
+      router.push('/auth/login');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
+      // Appliquer le filtre si sélectionné
+      let finalAudioBlob = audioBlob;
+      if (selectedFilter.id !== 'original' && filterProcessorRef.current) {
+        console.log('🎨 Application du filtre:', selectedFilter.name);
+        finalAudioBlob = await filterProcessorRef.current.applyFilterAndExport(audioBlob, selectedFilter.id);
+      }
+
       // Déterminer le nom et l'extension du fichier
-      const fileExtension = importedFile ? 
-        importedFile.name.split('.').pop() || 'mp3' : 
+      const fileExtension = importedFile ?
+        importedFile.name.split('.').pop() || 'mp3' :
         'wav';
       const fileName = `vocal-${Date.now()}.${fileExtension}`;
-      
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('🎙️ Upload du vocal:', filePath);
+
       // Upload audio vers Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('audio-files')
-        .upload(fileName, audioBlob);
+        .upload(filePath, finalAudioBlob, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
         throw uploadError;
       }
 
+      console.log('✅ Vocal uploadé:', uploadData);
+
       // Obtenir l'URL publique du fichier
-      const { data: urlData } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('audio-files')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
+
+      console.log('📎 URL publique:', publicUrl);
 
       // Utiliser la bonne durée selon le mode
       const duration = mode === 'import' ? audioDuration : recordingTime;
@@ -252,8 +337,8 @@ const RecordingPage = () => {
         .from('posts')
         .insert([
           {
-            user_id: 1, // Tu remplaceras par l'ID de l'utilisateur connecté
-            audio_url: urlData.publicUrl,
+            user_id: user.id,
+            audio_url: publicUrl,
             duration: duration,
             likes_count: 0,
             comments_count: 0
@@ -263,8 +348,11 @@ const RecordingPage = () => {
         .single();
 
       if (postError) {
+        console.error('❌ Post creation error:', postError);
         throw postError;
       }
+
+      console.log('✅ Post créé:', postData);
 
       // Associer les tags au post
       const tagAssociations = selectedTags.map(tag => ({
@@ -277,14 +365,17 @@ const RecordingPage = () => {
         .insert(tagAssociations);
 
       if (tagError) {
+        console.error('❌ Tag association error:', tagError);
         throw tagError;
       }
 
-      alert('Vocal publié avec succès !');
+      console.log('✅ Tags associés');
+
+      alert('Vocal publié avec succès ! 🎉');
       router.push('/'); // Retour au fil d'actualité
-      
+
     } catch (error) {
-      console.error('Error publishing vocal:', error);
+      console.error('❌ Error publishing vocal:', error);
       alert('Erreur lors de la publication. Veuillez réessayer.');
     } finally {
       setIsUploading(false);
@@ -486,6 +577,86 @@ const RecordingPage = () => {
             </>
           )}
         </div>
+
+        {/* Filter Selection */}
+        {(audioBlob || importedFile) && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Filtre vocal
+              </h3>
+              <button
+                onClick={() => setShowFilterSelector(!showFilterSelector)}
+                className="text-purple-300 hover:text-purple-200"
+              >
+                {showFilterSelector ? 'Fermer' : 'Choisir'}
+              </button>
+            </div>
+
+            {/* Selected Filter */}
+            <div className="mb-4">
+              <div className={`${selectedFilter.color} text-white px-4 py-3 rounded-lg flex items-center justify-between`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{selectedFilter.emoji}</span>
+                  <div>
+                    <p className="font-semibold">{selectedFilter.name}</p>
+                    <p className="text-sm text-white/80">{selectedFilter.description}</p>
+                  </div>
+                </div>
+                {audioBuffer && (
+                  <button
+                    onClick={() => {
+                      if (isPlaying) {
+                        pauseAudio();
+                      } else {
+                        playAudio();
+                      }
+                    }}
+                    className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+                  >
+                    {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Selector Grid */}
+            {showFilterSelector && (
+              <div className="grid grid-cols-2 gap-2">
+                {availableFilters.map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => {
+                      setSelectedFilter(filter);
+                      // Rejouer avec le nouveau filtre si en cours de lecture
+                      if (isPlaying && audioBuffer) {
+                        pauseAudio();
+                        setTimeout(() => {
+                          setSelectedFilter(filter);
+                        }, 100);
+                      }
+                    }}
+                    className={`${
+                      selectedFilter.id === filter.id
+                        ? `${filter.color} text-white`
+                        : 'bg-white/10 text-white/80 hover:bg-white/20'
+                    } px-3 py-3 rounded-lg flex items-center gap-2 transition-all text-left`}
+                  >
+                    <span className="text-xl">{filter.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{filter.name}</p>
+                      <p className="text-xs opacity-80 truncate">{filter.description}</p>
+                    </div>
+                    {selectedFilter.id === filter.id && (
+                      <Check className="w-4 h-4 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tag Selection */}
         {(audioBlob || importedFile) && (
