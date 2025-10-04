@@ -531,35 +531,31 @@ const VocalFeed: React.FC = () => {
   return (
     <div className="max-w-md mx-auto bg-transparent min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-8 rounded-b-3xl relative overflow-hidden">
-        {/* Bouton déconnexion en haut à droite */}
-        <div className="absolute top-4 right-4">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 pt-6 pb-8 rounded-b-3xl relative overflow-hidden">
+        {/* Top bar: Logo + Déconnexion */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold vocal-pulse">Voccal</h1>
           {user && (
             <button
               onClick={handleSignOut}
-              className="p-1 text-white/80 hover:text-white transition-colors"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
               aria-label="Se déconnecter"
             >
-              <LogOut size={18} />
+              <LogOut size={20} />
             </button>
           )}
         </div>
 
-        {/* Titre centré */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold vocal-pulse">Voccal</h1>
-        </div>
-
-        {/* Bouton centré avec animations */}
+        {/* Bouton principal "Écoutez le monde" */}
         {user && profile && (
-          <div className="flex justify-center">
+          <div className="flex justify-center mb-4">
             <button
               onClick={handleStartListening}
               disabled={posts.length === 0}
-              className="relative bg-white text-purple-600 px-6 py-3 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-lg hover:shadow-xl group"
+              className="relative bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-xl hover:shadow-2xl group"
             >
               {/* Ondes animées */}
-              <div className="absolute inset-0 rounded-full">
+              <div className="absolute inset-0 rounded-full pointer-events-none">
                 <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s' }}></div>
                 <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }}></div>
                 <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '1s' }}></div>
@@ -567,23 +563,57 @@ const VocalFeed: React.FC = () => {
 
               {/* Contenu du bouton */}
               <div className="relative flex items-center gap-3">
-                <Play size={20} className="group-hover:scale-110 transition-transform" />
+                <Play size={24} className="group-hover:scale-110 transition-transform" fill="currentColor" />
                 <span>Écoutez le monde, {profile.username}</span>
               </div>
             </button>
           </div>
         )}
 
+        {/* Message de bienvenue ou stats */}
+        {user && profile && posts.length > 0 && (
+          <div className="text-center">
+            <p className="text-purple-100 text-sm">
+              {posts.length} voccal{posts.length > 1 ? 's' : ''} disponible{posts.length > 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
+
         {/* Profil incomplet */}
         {user && !profile && (
-          <div className="text-center">
-            <p className="text-sm text-purple-200 mb-2">Profil incomplet</p>
-            <button
-              onClick={() => router.push('/profile')}
-              className="text-sm text-white bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded-full transition-colors"
-            >
-              Créer profil
-            </button>
+          <div className="text-center py-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <p className="text-white font-medium mb-3">Complétez votre profil pour commencer</p>
+              <button
+                onClick={() => router.push('/profile')}
+                className="bg-white text-purple-600 font-semibold px-6 py-3 rounded-full hover:bg-purple-50 transition-colors shadow-lg"
+              >
+                Créer mon profil
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Non connecté */}
+        {!user && (
+          <div className="text-center py-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <p className="text-white font-medium mb-3">Connectez-vous pour écouter le monde</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="bg-white text-purple-600 font-semibold px-6 py-3 rounded-full hover:bg-purple-50 transition-colors shadow-lg"
+                >
+                  Se connecter
+                </button>
+                <button
+                  onClick={() => router.push('/auth/register')}
+                  className="bg-purple-800 text-white font-semibold px-6 py-3 rounded-full hover:bg-purple-900 transition-colors border border-white/30"
+                >
+                  S'inscrire
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
