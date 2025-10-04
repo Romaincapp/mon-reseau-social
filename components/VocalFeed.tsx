@@ -531,8 +531,9 @@ const VocalFeed: React.FC = () => {
   return (
     <div className="max-w-md mx-auto bg-transparent min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-8 rounded-b-3xl">
-        <div className="flex items-center justify-end mb-2">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-8 rounded-b-3xl relative overflow-hidden">
+        {/* Bouton déconnexion en haut à droite */}
+        <div className="absolute top-4 right-4">
           {user && (
             <button
               onClick={handleSignOut}
@@ -543,36 +544,49 @@ const VocalFeed: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-1 vocal-pulse">Voccal</h1>
-            <p className="text-purple-200">Écoutez le monde</p>
-          </div>
-          {user && (
-            <div className="text-right">
-              {profile ? (
-                <button
-                  onClick={handleStartListening}
-                  disabled={posts.length === 0}
-                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 backdrop-blur-sm border border-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <Play size={16} />
-                  <span>Écoutez le monde, {profile.username}</span>
-                </button>
-              ) : (
-                <div>
-                  <p className="text-xs text-purple-200">Profil incomplet</p>
-                  <button
-                    onClick={() => router.push('/profile')}
-                    className="text-xs text-white bg-purple-800 px-2 py-1 rounded"
-                  >
-                    Créer profil
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+
+        {/* Titre centré */}
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold mb-2 vocal-pulse">Voccal</h1>
+          <p className="text-purple-200">Écoutez le monde</p>
         </div>
+
+        {/* Bouton centré avec animations */}
+        {user && profile && (
+          <div className="flex justify-center">
+            <button
+              onClick={handleStartListening}
+              disabled={posts.length === 0}
+              className="relative bg-white text-purple-600 px-6 py-3 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-lg hover:shadow-xl group"
+            >
+              {/* Ondes animées */}
+              <div className="absolute inset-0 rounded-full">
+                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s' }}></div>
+                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }}></div>
+                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '1s' }}></div>
+              </div>
+
+              {/* Contenu du bouton */}
+              <div className="relative flex items-center gap-3">
+                <Play size={20} className="group-hover:scale-110 transition-transform" />
+                <span>Écoutez le monde, {profile.username}</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Profil incomplet */}
+        {user && !profile && (
+          <div className="text-center">
+            <p className="text-sm text-purple-200 mb-2">Profil incomplet</p>
+            <button
+              onClick={() => router.push('/profile')}
+              className="text-sm text-white bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded-full transition-colors"
+            >
+              Créer profil
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Posts */}
