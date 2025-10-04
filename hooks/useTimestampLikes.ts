@@ -94,7 +94,7 @@ export function useTimestampLikes(postId: string, userId?: string) {
           .delete()
           .eq('id', existing.id);
       } else {
-        // Sinon, ajouter le like
+        // Sinon, ajouter le like temporel
         await supabase
           .from('timestamp_likes')
           .insert({
@@ -102,6 +102,37 @@ export function useTimestampLikes(postId: string, userId?: string) {
             user_id: userId,
             timestamp
           });
+
+        // Vérifier si l'utilisateur a déjà liké le post
+        const { data: existingPostLike } = await supabase
+          .from('likes')
+          .select('id')
+          .eq('post_id', postId)
+          .eq('user_id', userId)
+          .single();
+
+        // Si pas encore liké le post, ajouter un like au post
+        if (!existingPostLike) {
+          // Ajouter le like
+          await supabase
+            .from('likes')
+            .insert({
+              post_id: postId,
+              user_id: userId
+            });
+
+          // Incrémenter le compteur de likes du post
+          const { data: post } = await supabase
+            .from('posts')
+            .select('likes_count')
+            .eq('id', postId)
+            .single();
+
+          await supabase
+            .from('posts')
+            .update({ likes_count: (post?.likes_count || 0) + 1 })
+            .eq('id', postId);
+        }
       }
 
       // Recharger les likes

@@ -339,6 +339,13 @@ const VocalFeed: React.FC = () => {
     currentPost
   } = useAudioPlayer();
 
+  // Fonction pour commencer à écouter le feed depuis le premier post
+  const handleStartListening = (): void => {
+    if (posts.length > 0) {
+      playPost(posts[0] as any, posts as any);
+    }
+  };
+
   // Utiliser le context d'authentification
   const { user, profile, signOut } = useAuth();
   
@@ -544,10 +551,14 @@ const VocalFeed: React.FC = () => {
           {user && (
             <div className="text-right">
               {profile ? (
-                <div>
-                  <p className="text-sm text-purple-200">Connecté en tant que</p>
-                  <p className="text-white font-medium">{profile.username}</p>
-                </div>
+                <button
+                  onClick={handleStartListening}
+                  disabled={posts.length === 0}
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 backdrop-blur-sm border border-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Play size={16} />
+                  <span>Écoutez le monde, {profile.username}</span>
+                </button>
               ) : (
                 <div>
                   <p className="text-xs text-purple-200">Profil incomplet</p>
