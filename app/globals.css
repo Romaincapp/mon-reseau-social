@@ -29,7 +29,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Animation des ondes sonores de fond */
+/* Animation des ondes sonores de fond - Première vague */
 body::before {
   content: '';
   position: fixed;
@@ -43,12 +43,35 @@ body::before {
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 48px,
-      var(--wave-color) 48px,
-      var(--wave-color) 50px
+      transparent 40px,
+      var(--wave-color) 40px,
+      var(--wave-color) 44px
     );
   opacity: 0;
-  animation: wavePass 12s ease-in-out infinite;
+  animation: wavePass 10s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+
+/* Deuxième vague d'ondes */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      var(--wave-color) 60px,
+      var(--wave-color) 65px
+    );
+  opacity: 0;
+  animation: wavePass 14s ease-in-out infinite 3s;
   transform: translateX(-100%);
 }
 
@@ -58,11 +81,11 @@ body::before {
     opacity: 0;
   }
   10% {
-    opacity: 0.03;
+    opacity: 0.08;
   }
   50% {
     transform: translateX(100%);
-    opacity: 0.03;
+    opacity: 0.08;
   }
   60% {
     opacity: 0;
