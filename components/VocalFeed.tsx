@@ -454,7 +454,7 @@ const VocalFeed: React.FC = () => {
       return;
     }
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce vocal ?')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce voccal ?')) {
       return;
     }
 
@@ -506,7 +506,7 @@ const VocalFeed: React.FC = () => {
       console.log('✅ Post supprimé avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);
-      alert('Erreur lors de la suppression du vocal');
+      alert('Erreur lors de la suppression du voccal');
     } finally {
       setDeletingPostId(null);
     }
@@ -545,7 +545,7 @@ const VocalFeed: React.FC = () => {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-1 vocal-pulse">Vocal</h1>
+            <h1 className="text-3xl font-bold mb-1 vocal-pulse">Voccal</h1>
             <p className="text-purple-200">Écoutez le monde</p>
           </div>
           {user && (
@@ -580,11 +580,11 @@ const VocalFeed: React.FC = () => {
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
-            <p className="text-gray-500 mt-2">Chargement des vocaux...</p>
+            <p className="text-gray-500 mt-2">Chargement des voccals...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">Aucun vocal trouvé</p>
+            <p className="text-gray-500">Aucun voccal trouvé</p>
           </div>
         ) : (
           posts.map((post) => {

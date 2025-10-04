@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vocal - Écoutez le monde",
+  title: "Voccal - Écoutez le monde",
   description: "Réseau social audio pour partager et découvrir des vocaux",
 };
 

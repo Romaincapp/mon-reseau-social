@@ -97,7 +97,7 @@ export default function CompleteProfile() {
             Complétez votre profil
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Pour commencer à utiliser Vocal, nous avons besoin de quelques informations
+            Pour commencer à utiliser Voccal, nous avons besoin de quelques informations
           </p>
         </div>
 

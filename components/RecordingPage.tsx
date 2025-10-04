@@ -320,7 +320,7 @@ const availableTags: Tag[] = [
         throw uploadError;
       }
 
-      console.log('✅ Vocal uploadé:', uploadData);
+      console.log('✅ Voccal uploadé:', uploadData);
 
       // Obtenir l'URL publique du fichier
       const { data: { publicUrl } } = supabase.storage
@@ -371,7 +371,7 @@ const availableTags: Tag[] = [
 
       console.log('✅ Tags associés');
 
-      alert('Vocal publié avec succès ! 🎉');
+      alert('Voccal publié avec succès ! 🎉');
       router.push('/'); // Retour au fil d'actualité
 
     } catch (error) {
@@ -411,7 +411,7 @@ const availableTags: Tag[] = [
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-xl font-bold text-white">Nouveau Vocal</h1>
+          <h1 className="text-xl font-bold text-white">Nouveau Voccal</h1>
           <div className="w-6 h-6"></div>
         </div>
 
