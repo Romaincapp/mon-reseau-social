@@ -31,7 +31,7 @@ export function useTimestampLikes(postId: string, userId?: string) {
         const checkTimestamp = timestamp + i;
         if (grouped[checkTimestamp]) {
           grouped[checkTimestamp].count++;
-          if (like.user_id === userId) {
+          if (userId && like.user_id === userId) {
             grouped[checkTimestamp].user_id = userId;
           }
           found = true;
