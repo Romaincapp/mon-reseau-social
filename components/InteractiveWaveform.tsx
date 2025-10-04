@@ -179,7 +179,7 @@ const InteractiveWaveform: React.FC<InteractiveWaveformProps> = ({
       {/* Instructions */}
       {showLikes && (
         <div className="text-xs text-gray-400 mt-1 text-center">
-          Cliquez pour naviguer • Double-cliquez pour liker à cet instant
+          Double-cliquez pour liker à cet instant
         </div>
       )}
     </div>
