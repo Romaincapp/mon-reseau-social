@@ -549,24 +549,61 @@ const VocalFeed: React.FC = () => {
         {/* Bouton principal "Écoutez le monde" */}
         {user && profile && (
           <div className="flex justify-center mb-4">
-            <button
-              onClick={handleStartListening}
-              disabled={posts.length === 0}
-              className="relative bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-xl hover:shadow-2xl group"
-            >
-              {/* Ondes animées */}
+            <div className="relative">
+              {/* Ondes qui se propagent autour du bouton (comme les avatars) */}
               <div className="absolute inset-0 rounded-full pointer-events-none">
-                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s' }}></div>
-                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }}></div>
-                <div className="absolute inset-0 rounded-full bg-white opacity-0 animate-ping" style={{ animationDuration: '2s', animationDelay: '1s' }}></div>
+                {/* Onde 1 - la plus proche */}
+                <div
+                  className="absolute inset-0 rounded-full border-2 border-white opacity-0"
+                  style={{
+                    animation: 'waveform-pulse 2s ease-out infinite',
+                    animationDelay: '0s'
+                  }}
+                />
+                {/* Onde 2 - moyenne distance */}
+                <div
+                  className="absolute inset-0 rounded-full border-2 border-white opacity-0"
+                  style={{
+                    animation: 'waveform-pulse 2s ease-out infinite',
+                    animationDelay: '0.7s'
+                  }}
+                />
+                {/* Onde 3 - la plus éloignée */}
+                <div
+                  className="absolute inset-0 rounded-full border-2 border-white opacity-0"
+                  style={{
+                    animation: 'waveform-pulse 2s ease-out infinite',
+                    animationDelay: '1.4s'
+                  }}
+                />
               </div>
 
-              {/* Contenu du bouton */}
-              <div className="relative flex items-center gap-3">
-                <Play size={24} className="group-hover:scale-110 transition-transform" fill="currentColor" />
+              <button
+                onClick={handleStartListening}
+                disabled={posts.length === 0}
+                className="relative bg-white text-purple-600 px-6 py-3 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl group z-10"
+              >
+                <Play size={20} className="group-hover:scale-110 transition-transform" fill="currentColor" />
                 <span>Écoutez le monde, {profile.username}</span>
-              </div>
-            </button>
+              </button>
+            </div>
+
+            {/* Styles pour l'animation des ondes */}
+            <style jsx>{`
+              @keyframes waveform-pulse {
+                0% {
+                  transform: scale(1);
+                  opacity: 0.8;
+                }
+                50% {
+                  opacity: 0.4;
+                }
+                100% {
+                  transform: scale(1.8);
+                  opacity: 0;
+                }
+              }
+            `}</style>
           </div>
         )}
 
