@@ -546,11 +546,17 @@ const VocalFeed: React.FC = () => {
           )}
         </div>
 
-        {/* Bouton principal "Écoutez le monde" */}
+        {/* Message et bouton play */}
         {user && profile && (
-          <div className="flex justify-center mb-4">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            {/* Texte */}
+            <p className="text-white text-base font-medium">
+              Écoutez le monde, {profile.username}
+            </p>
+
+            {/* Bouton Play avec ondes */}
             <div className="relative">
-              {/* Ondes qui se propagent autour du bouton (comme les avatars) */}
+              {/* Ondes qui se propagent autour du bouton */}
               <div className="absolute inset-0 rounded-full pointer-events-none">
                 {/* Onde 1 - la plus proche */}
                 <div
@@ -581,10 +587,10 @@ const VocalFeed: React.FC = () => {
               <button
                 onClick={handleStartListening}
                 disabled={posts.length === 0}
-                className="relative bg-white text-purple-600 px-6 py-3 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl group z-10"
+                className="relative w-12 h-12 bg-white text-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                aria-label="Commencer l'écoute"
               >
-                <Play size={20} className="group-hover:scale-110 transition-transform" fill="currentColor" />
-                <span>Écoutez le monde, {profile.username}</span>
+                <Play size={20} fill="currentColor" />
               </button>
             </div>
 
@@ -596,10 +602,10 @@ const VocalFeed: React.FC = () => {
                   opacity: 0.8;
                 }
                 50% {
-                  opacity: 0.3;
+                  opacity: 0.4;
                 }
                 100% {
-                  transform: scale(1.3);
+                  transform: scale(1.8);
                   opacity: 0;
                 }
               }
