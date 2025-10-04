@@ -596,10 +596,10 @@ const VocalFeed: React.FC = () => {
                   opacity: 0.8;
                 }
                 50% {
-                  opacity: 0.4;
+                  opacity: 0.3;
                 }
                 100% {
-                  transform: scale(1.8);
+                  transform: scale(1.3);
                   opacity: 0;
                 }
               }
