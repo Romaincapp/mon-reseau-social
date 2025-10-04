@@ -661,6 +661,45 @@ export type Database = {
         }
         Relationships: []
       }
+      timestamp_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          timestamp: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          timestamp: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          timestamp?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timestamp_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timestamp_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

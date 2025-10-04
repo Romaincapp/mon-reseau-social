@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLikes } from '@/hooks/useLikes';
+import { useTimestampLikes } from '@/hooks/useTimestampLikes';
 import AvatarWithWaveform from './AvatarWithWaveform';
+import InteractiveWaveform from './InteractiveWaveform';
 
 // Types TypeScript matching database schema
 interface Tag {
@@ -77,6 +79,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const router = useRouter();
   const { user } = useAuth();
   const { isLiked, likesCount, loading: likesLoading, toggleLike } = useLikes(post.id, post.likes_count ?? 0);
+  const { timestampLikes, addTimestampLike } = useTimestampLikes(post.id, user?.id);
+  const { currentTime, seekTo } = useAudioPlayer();
 
   const getRandomAvatar = (): string => {
     const avatars: string[] = ['👩‍🎤', '👨‍💼', '🧘‍♀️', '👩‍💻', '👨‍🎨', '👩‍🔬'];
@@ -115,25 +119,19 @@ const PostCard: React.FC<PostCardProps> = ({
     await toggleLike();
   };
 
-  const Waveform: React.FC<{ isPlaying: boolean }> = ({ isPlaying }) => {
-    const bars = Array.from({ length: 20 }, (_, i) => (
-      <div
-        key={i}
-        className={`w-1 bg-gray-300 rounded-full transition-all duration-300 ${
-          isPlaying ? 'animate-pulse' : ''
-        }`}
-        style={{
-          height: `${Math.random() * 20 + 10}px`,
-          animationDelay: `${i * 0.1}s`
-        }}
-      />
-    ));
+  const handleSeek = (time: number) => {
+    seekTo(time);
+    if (!isCurrentlyPlaying) {
+      onPlay(post);
+    }
+  };
 
-    return (
-      <div className="flex items-center space-x-1 flex-1 mx-4">
-        {bars}
-      </div>
-    );
+  const handleTimestampLike = async (timestamp: number) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    await addTimestampLike(timestamp);
   };
 
   return (
@@ -236,10 +234,10 @@ const PostCard: React.FC<PostCardProps> = ({
       <div className={`rounded-xl p-4 mb-4 transition-colors ${
         isCurrentlySelected ? 'bg-purple-50' : 'bg-gray-50'
       }`}>
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => onPlay(post)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg ${
+            className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg flex-shrink-0 ${
               isCurrentlySelected
                 ? 'bg-purple-600 hover:bg-purple-700 scale-110'
                 : 'bg-purple-500 hover:bg-purple-600'
@@ -253,9 +251,21 @@ const PostCard: React.FC<PostCardProps> = ({
             )}
           </button>
 
-          <Waveform isPlaying={isCurrentlyPlaying} />
+          <div className="flex-1">
+            <InteractiveWaveform
+              isPlaying={isCurrentlyPlaying}
+              currentTime={isCurrentlySelected ? currentTime : 0}
+              duration={post.duration}
+              onSeek={handleSeek}
+              onTimestampLike={handleTimestampLike}
+              timestampLikes={timestampLikes}
+              postId={post.id}
+              userId={user?.id}
+              showLikes={true}
+            />
+          </div>
 
-          <span className="text-sm font-medium text-gray-600 min-w-fit">
+          <span className="text-sm font-medium text-gray-600 min-w-fit flex-shrink-0">
             {formatDuration(post.duration)}
           </span>
         </div>

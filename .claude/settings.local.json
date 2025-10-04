@@ -17,7 +17,8 @@
       "Bash(npm run build:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit - Application prête pour déploiement\n\n- Configuration Next.js 15 avec TypeScript\n- Authentification Supabase complète\n- Enregistrement audio avec filtres\n- Feed vocal avec player global\n- Système de profils et posts\n- Types TypeScript mis à jour\n- Build production validé\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit - Application prête pour déploiement\n\n- Configuration Next.js 15 avec TypeScript\n- Authentification Supabase complète\n- Enregistrement audio avec filtres\n- Feed vocal avec player global\n- Système de profils et posts\n- Types TypeScript mis à jour\n- Build production validé\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

@@ -4,8 +4,14 @@
 import React from 'react';
 import { Play, Pause, SkipForward, SkipBack, Volume2, X } from 'lucide-react';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
+import { useTimestampLikes } from '@/hooks/useTimestampLikes';
+import { useAuth } from '@/contexts/AuthContext';
+import InteractiveWaveform from './InteractiveWaveform';
+import { useRouter } from 'next/navigation';
 
 const GlobalAudioPlayer: React.FC = () => {
+  const router = useRouter();
+  const { user } = useAuth();
   const {
     currentPost,
     isPlaying,
@@ -22,6 +28,11 @@ const GlobalAudioPlayer: React.FC = () => {
     closePlayer,
   } = useAudioPlayer();
 
+  const { timestampLikes, addTimestampLike } = useTimestampLikes(
+    currentPost?.id || '',
+    user?.id
+  );
+
   // Ne pas afficher le player si aucun post en cours
   if (!currentPost) return null;
 
@@ -31,12 +42,12 @@ const GlobalAudioPlayer: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const newTime = percentage * duration;
-    seekTo(newTime);
+  const handleTimestampLike = async (timestamp: number) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    await addTimestampLike(timestamp);
   };
 
   const getRandomAvatar = (): string => {
@@ -92,14 +103,18 @@ const GlobalAudioPlayer: React.FC = () => {
           </div>
         </div>
 
-        {/* Barre de progression */}
-        <div 
-          className="w-full h-2 bg-gray-200 rounded-full cursor-pointer mb-3"
-          onClick={handleProgressClick}
-        >
-          <div 
-            className="h-full bg-purple-500 rounded-full transition-all duration-300"
-            style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+        {/* Waveform interactif */}
+        <div className="mb-3">
+          <InteractiveWaveform
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={seekTo}
+            onTimestampLike={handleTimestampLike}
+            timestampLikes={timestampLikes}
+            postId={currentPost.id}
+            userId={user?.id}
+            showLikes={true}
           />
         </div>
 
@@ -136,22 +151,6 @@ const GlobalAudioPlayer: React.FC = () => {
           </button>
         </div>
 
-        {/* Waveform animée pendant la lecture */}
-        {isPlaying && (
-          <div className="flex items-center justify-center space-x-1 mt-3">
-            {[...Array(15)].map((_, i) => (
-              <div
-                key={i}
-                className="w-0.5 bg-purple-400 rounded-full animate-pulse"
-                style={{
-                  height: `${Math.random() * 12 + 4}px`,
-                  animationDelay: `${i * 0.1}s`,
-                  animationDuration: '1s'
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
