@@ -109,15 +109,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/login`,
-      }
-    })
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/auth/login`,
+          data: {
+            email: email,
+          }
+        }
+      })
 
-    return { error }
+      if (error) {
+        console.error('SignUp error:', error)
+        return { error }
+      }
+
+      console.log('SignUp success. User:', data.user)
+      console.log('SignUp session:', data.session)
+
+      // Important: si data.user existe mais data.session est null,
+      // cela signifie que l'email de confirmation est requis
+      if (data.user && !data.session) {
+        console.log('Email confirmation required for:', data.user.email)
+      }
+
+      return { error: null }
+    } catch (err) {
+      console.error('Unexpected signup error:', err)
+      return { error: err }
+    }
   }
 
   const signIn = async (email: string, password: string) => {
