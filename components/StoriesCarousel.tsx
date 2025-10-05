@@ -29,7 +29,9 @@ const StoriesCarousel = () => {
     if (!user) return;
 
     try {
+      console.log('Loading stories for user:', user.id);
       const groups = await getStoriesGroupedByUser(user.id);
+      console.log('Story groups received:', groups);
       setStoryGroups(groups);
     } catch (error) {
       console.error('Error loading stories:', error);

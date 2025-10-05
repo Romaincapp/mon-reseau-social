@@ -197,21 +197,33 @@ export async function getStoriesGroupedByUser(currentUserId: string): Promise<Ar
   stories: Story[]
   has_unviewed: boolean
 }>> {
-  // Get current user's stories
-  const { data: myStories } = await supabase
+  // Get current user's stories with explicit join
+  const { data: myStories, error: myStoriesError } = await supabase
     .from('stories')
     .select(`
       *,
-      profiles:user_id (id, username, avatar_url, full_name),
+      profiles!stories_user_id_fkey (id, username, avatar_url, full_name),
       story_views!left (id, viewer_id)
     `)
     .eq('user_id', currentUserId)
     .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
 
+  if (myStoriesError) {
+    console.error('Error fetching my stories:', myStoriesError)
+  }
+
+  console.log('My stories raw:', myStories)
+
   // Get followed users' stories
-  const { data: followedStories } = await supabase
+  const { data: followedStories, error: followedError } = await supabase
     .rpc('get_followed_users_stories', { p_user_id: currentUserId })
+
+  if (followedError) {
+    console.error('Error fetching followed stories:', followedError)
+  }
+
+  console.log('Followed stories raw:', followedStories)
 
   // Group stories by user
   const grouped: Record<string, Story[]> = {}
@@ -239,10 +251,21 @@ export async function getStoriesGroupedByUser(currentUserId: string): Promise<Ar
     })
   }
 
+  console.log('Grouped stories:', grouped)
+
   // Convert to array format
-  return Object.entries(grouped).map(([userId, stories]) => ({
-    user: stories[0].profiles,
-    stories,
-    has_unviewed: stories.some(s => !s.has_viewed)
-  }))
+  const result = Object.entries(grouped).map(([userId, stories]) => {
+    const profile = stories[0].profiles
+    console.log('Profile for user', userId, ':', profile)
+
+    return {
+      user: profile,
+      stories,
+      has_unviewed: stories.some(s => !s.has_viewed)
+    }
+  }).filter(group => group.user) // Filter out groups without profile
+
+  console.log('Final result:', result)
+
+  return result
 }
