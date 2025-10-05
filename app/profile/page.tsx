@@ -52,6 +52,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     setEditBio(profile?.bio || '');
@@ -202,13 +203,15 @@ export default function ProfilePage() {
 
     // Vérifier le type de fichier
     if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image');
+      setAvatarMessage({ type: 'error', text: 'Veuillez sélectionner une image' });
+      setTimeout(() => setAvatarMessage(null), 4000);
       return;
     }
 
-    // Vérifier la taille (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('L\'image ne doit pas dépasser 2MB');
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarMessage({ type: 'error', text: 'L\'image ne doit pas dépasser 5MB' });
+      setTimeout(() => setAvatarMessage(null), 4000);
       return;
     }
 
@@ -239,7 +242,8 @@ export default function ProfilePage() {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Erreur lors de l\'upload de l\'image');
+        setAvatarMessage({ type: 'error', text: 'Erreur lors de l\'upload de l\'image' });
+        setTimeout(() => setAvatarMessage(null), 4000);
         return;
       }
 
@@ -257,14 +261,18 @@ export default function ProfilePage() {
 
       if (updateError) {
         console.error('❌ Update error:', updateError);
-        alert('Erreur lors de la mise à jour du profil');
+        setAvatarMessage({ type: 'error', text: 'Erreur lors de la mise à jour du profil' });
+        setTimeout(() => setAvatarMessage(null), 4000);
       } else {
         console.log('✅ Avatar mis à jour avec succès!');
         console.log('📸 Nouvelle URL dans le profil:', publicUrl);
+        setAvatarMessage({ type: 'success', text: 'Photo de profil mise à jour avec succès !' });
+        setTimeout(() => setAvatarMessage(null), 4000);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      alert('Erreur inattendue lors de l\'upload');
+      setAvatarMessage({ type: 'error', text: 'Erreur inattendue lors de l\'upload' });
+      setTimeout(() => setAvatarMessage(null), 4000);
     } finally {
       setUploadingAvatar(false);
     }
@@ -339,6 +347,17 @@ export default function ProfilePage() {
                 disabled={uploadingAvatar}
               />
             </div>
+
+            {/* Message de succès/erreur pour l'avatar */}
+            {avatarMessage && (
+              <div className={`mb-4 px-4 py-2 rounded-lg text-sm ${
+                avatarMessage.type === 'success'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {avatarMessage.text}
+              </div>
+            )}
             <h2 className="text-2xl font-bold mb-1">{profile?.full_name || 'Nom non défini'}</h2>
             <p className="text-purple-200 mb-4">{profile?.username || 'username'}</p>
 
