@@ -601,6 +601,77 @@ export type Database = {
           },
         ]
       }
+      stories: {
+        Row: {
+          id: string
+          user_id: string
+          audio_url: string
+          duration: number
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          audio_url: string
+          duration: number
+          created_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          audio_url?: string
+          duration?: number
+          created_at?: string
+          expires_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewer_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewer_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewer_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reposts: {
         Row: {
           comment: string | null
@@ -718,6 +789,20 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      get_followed_users_stories: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          audio_url: string
+          duration: number
+          created_at: string
+          expires_at: string
+          profiles: Json
+          views_count: number
+          has_viewed: boolean
+        }[]
       }
       get_trending_posts: {
         Args: { time_window?: unknown }

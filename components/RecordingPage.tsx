@@ -19,6 +19,7 @@ const RecordingPage = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [mode, setMode] = useState<'record' | 'import'>('record');
+  const [publishType, setPublishType] = useState<'post' | 'story'>('post');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -277,8 +278,10 @@ const availableTags: Tag[] = [
   };
 
   const handlePublish = async () => {
-    if (!audioBlob || selectedTags.length === 0) {
-      alert('Veuillez enregistrer un audio et sélectionner au moins un tag');
+    if (!audioBlob || (publishType === 'post' && selectedTags.length === 0)) {
+      alert(publishType === 'post'
+        ? 'Veuillez enregistrer un audio et sélectionner au moins un tag'
+        : 'Veuillez enregistrer un audio');
       return;
     }
 
@@ -302,10 +305,10 @@ const availableTags: Tag[] = [
       const fileExtension = importedFile ?
         importedFile.name.split('.').pop() || 'mp3' :
         'wav';
-      const fileName = `vocal-${Date.now()}.${fileExtension}`;
+      const fileName = `${publishType}-${Date.now()}.${fileExtension}`;
       const filePath = `${user.id}/${fileName}`;
 
-      console.log('🎙️ Upload du vocal:', filePath);
+      console.log(`🎙️ Upload du ${publishType}:`, filePath);
 
       // Upload audio vers Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -320,7 +323,7 @@ const availableTags: Tag[] = [
         throw uploadError;
       }
 
-      console.log('✅ Voccal uploadé:', uploadData);
+      console.log(`✅ ${publishType} uploadé:`, uploadData);
 
       // Obtenir l'URL publique du fichier
       const { data: { publicUrl } } = supabase.storage
@@ -332,50 +335,71 @@ const availableTags: Tag[] = [
       // Utiliser la bonne durée selon le mode
       const duration = mode === 'import' ? audioDuration : recordingTime;
 
-      // Créer le post dans la base de données
-      const { data: postData, error: postError } = await supabase
-        .from('posts')
-        .insert([
-          {
-            user_id: user.id,
-            audio_url: publicUrl,
-            duration: duration,
-            likes_count: 0,
-            comments_count: 0
-          }
-        ])
-        .select()
-        .single();
+      if (publishType === 'story') {
+        // Créer une story
+        const { error: storyError } = await supabase
+          .from('stories')
+          .insert([
+            {
+              user_id: user.id,
+              audio_url: publicUrl,
+              duration: duration
+            }
+          ]);
 
-      if (postError) {
-        console.error('❌ Post creation error:', postError);
-        throw postError;
+        if (storyError) {
+          console.error('❌ Story creation error:', storyError);
+          throw storyError;
+        }
+
+        console.log('✅ Story créée');
+        alert('Story publiée avec succès ! 🎉');
+        router.push('/');
+      } else {
+        // Créer un post dans la base de données
+        const { data: postData, error: postError } = await supabase
+          .from('posts')
+          .insert([
+            {
+              user_id: user.id,
+              audio_url: publicUrl,
+              duration: duration,
+              likes_count: 0,
+              comments_count: 0
+            }
+          ])
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('❌ Post creation error:', postError);
+          throw postError;
+        }
+
+        console.log('✅ Post créé:', postData);
+
+        // Associer les tags au post
+        const tagAssociations = selectedTags.map(tag => ({
+          post_id: postData.id,
+          tag_id: tag.id
+        }));
+
+        const { error: tagError } = await supabase
+          .from('post_tags')
+          .insert(tagAssociations);
+
+        if (tagError) {
+          console.error('❌ Tag association error:', tagError);
+          throw tagError;
+        }
+
+        console.log('✅ Tags associés');
+        alert('Voccal publié avec succès ! 🎉');
+        router.push('/'); // Retour au fil d'actualité
       }
-
-      console.log('✅ Post créé:', postData);
-
-      // Associer les tags au post
-      const tagAssociations = selectedTags.map(tag => ({
-        post_id: postData.id,
-        tag_id: tag.id
-      }));
-
-      const { error: tagError } = await supabase
-        .from('post_tags')
-        .insert(tagAssociations);
-
-      if (tagError) {
-        console.error('❌ Tag association error:', tagError);
-        throw tagError;
-      }
-
-      console.log('✅ Tags associés');
-
-      alert('Voccal publié avec succès ! 🎉');
-      router.push('/'); // Retour au fil d'actualité
 
     } catch (error) {
-      console.error('❌ Error publishing vocal:', error);
+      console.error(`❌ Error publishing ${publishType}:`, error);
       alert('Erreur lors de la publication. Veuillez réessayer.');
     } finally {
       setIsUploading(false);
@@ -658,8 +682,37 @@ const availableTags: Tag[] = [
           </div>
         )}
 
-        {/* Tag Selection */}
+        {/* Publish Type Selection */}
         {(audioBlob || importedFile) && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
+            <h3 className="text-lg font-bold text-white mb-4">Type de publication</h3>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setPublishType('post')}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                  publishType === 'post'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                📝 Post sur le mur
+              </button>
+              <button
+                onClick={() => setPublishType('story')}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                  publishType === 'story'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                ⭐ Story (24h)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tag Selection (only for posts) */}
+        {(audioBlob || importedFile) && publishType === 'post' && (
           <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">Tags ({selectedTags.length}/3)</h3>
@@ -717,7 +770,7 @@ const availableTags: Tag[] = [
         )}
 
         {/* Publish Button */}
-        {audioBlob && selectedTags.length > 0 && (
+        {audioBlob && (publishType === 'story' || selectedTags.length > 0) && (
           <button
             onClick={handlePublish}
             disabled={isUploading}
@@ -728,7 +781,7 @@ const availableTags: Tag[] = [
             ) : (
               <Send className="w-5 h-5" />
             )}
-            {isUploading ? 'Publication...' : 'Publier le vocal'}
+            {isUploading ? 'Publication...' : (publishType === 'story' ? 'Publier la story' : 'Publier le vocal')}
           </button>
         )}
 

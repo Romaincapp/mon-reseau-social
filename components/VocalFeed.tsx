@@ -10,6 +10,7 @@ import { useLikes } from '@/hooks/useLikes';
 import { useTimestampLikes } from '@/hooks/useTimestampLikes';
 import AvatarWithWaveform from './AvatarWithWaveform';
 import InteractiveWaveform from './InteractiveWaveform';
+import StoriesCarousel from './StoriesCarousel';
 
 // Types TypeScript matching database schema
 interface Tag {
@@ -530,6 +531,9 @@ const VocalFeed: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto bg-transparent min-h-screen">
+      {/* Stories Carousel */}
+      {user && <StoriesCarousel />}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 pt-6 pb-8 rounded-b-3xl relative overflow-hidden">
         {/* Top bar: Logo + Déconnexion */}
