@@ -54,6 +54,11 @@ export function useTimestampLikes(postId: string, userId?: string) {
 
   // Charger les likes temporels
   const fetchTimestampLikes = async () => {
+    if (!postId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('timestamp_likes')
@@ -152,6 +157,8 @@ export function useTimestampLikes(postId: string, userId?: string) {
   };
 
   useEffect(() => {
+    if (!postId) return;
+
     fetchTimestampLikes();
 
     // S'abonner aux changements en temps réel

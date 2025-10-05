@@ -20,8 +20,11 @@ const StoriesCarousel = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('StoriesCarousel mounted, user:', user);
     if (user) {
       loadStories();
+    } else {
+      console.log('No user, skipping story load');
     }
   }, [user]);
 
@@ -49,7 +52,9 @@ const StoriesCarousel = () => {
     router.push('/record');
   };
 
-  if (!user || loading) return null;
+  if (!user) return null;
+
+  console.log('Rendering StoriesCarousel, storyGroups:', storyGroups, 'loading:', loading);
 
   return (
     <div className="px-2">
@@ -68,6 +73,11 @@ const StoriesCarousel = () => {
             Créer
           </span>
         </button>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="text-white/60 text-xs">Chargement...</div>
+        )}
 
         {/* Story Groups */}
         {storyGroups.map((group) => (
