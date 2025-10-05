@@ -327,10 +327,23 @@ export default function ProfilePage() {
                 alwaysAnimate={true}
                 avatarUrl={profile?.avatar_url}
               />
+
+              {/* Overlay d'upload avec indicateur de progression */}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent mb-2 mx-auto"></div>
+                    <p className="text-white text-xs font-medium">Upload...</p>
+                  </div>
+                </div>
+              )}
+
               {/* Bouton pour changer la photo */}
               <label
                 htmlFor="avatar-upload"
-                className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                className={`absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg transition-colors ${
+                  uploadingAvatar ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-gray-50'
+                }`}
               >
                 {uploadingAvatar ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
@@ -350,7 +363,7 @@ export default function ProfilePage() {
 
             {/* Message de succès/erreur pour l'avatar */}
             {avatarMessage && (
-              <div className={`mb-4 px-4 py-2 rounded-lg text-sm ${
+              <div className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
                 avatarMessage.type === 'success'
                   ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
