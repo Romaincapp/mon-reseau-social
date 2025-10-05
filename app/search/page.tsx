@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import UserSearchResult from '@/components/UserSearchResult'
+import BottomNavigation from '@/components/BottomNavigation'
 import { Search } from 'lucide-react'
 
 export default function SearchPage() {
@@ -101,6 +102,9 @@ export default function SearchPage() {
           )}
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   )
 }

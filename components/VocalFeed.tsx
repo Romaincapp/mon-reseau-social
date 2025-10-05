@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Play, Pause, Home, Mic, User, LogIn, LogOut, MoreVertical, Edit, Trash2, X } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Play, Pause, LogOut, MoreVertical, Edit, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
@@ -12,6 +12,7 @@ import AvatarWithWaveform from './AvatarWithWaveform';
 import InteractiveWaveform from './InteractiveWaveform';
 import StoriesCarousel from './StoriesCarousel';
 import SuggestedProfiles from './SuggestedProfiles';
+import BottomNavigation from './BottomNavigation';
 
 // Types TypeScript matching database schema
 interface Tag {
@@ -694,40 +695,8 @@ const VocalFeed: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom Navigation avec bouton micro fonctionnel */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <button className="p-3 text-purple-500" aria-label="Accueil">
-            <Home size={24} />
-          </button>
-          <button
-            onClick={handleMicClick}
-            className={`p-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg transform hover:scale-105 transition-all duration-200 ${
-              !user ? 'opacity-75' : ''
-            }`}
-            aria-label="Enregistrer"
-          >
-            <Mic size={24} />
-          </button>
-          {user ? (
-            <button
-              onClick={handleProfileClick}
-              className="p-3 text-gray-400 hover:text-purple-500 transition-colors duration-200"
-              aria-label="Profil"
-            >
-              <User size={24} />
-            </button>
-          ) : (
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="p-3 text-gray-400 hover:text-purple-500 transition-colors duration-200"
-              aria-label="Se connecter"
-            >
-              <LogIn size={24} />
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };
