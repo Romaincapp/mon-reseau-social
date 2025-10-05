@@ -18,7 +18,8 @@
       "Bash(git remote add:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit - Application prête pour déploiement\n\n- Configuration Next.js 15 avec TypeScript\n- Authentification Supabase complète\n- Enregistrement audio avec filtres\n- Feed vocal avec player global\n- Système de profils et posts\n- Types TypeScript mis à jour\n- Build production validé\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Add missing Supabase client/server helpers\n\n- Install @supabase/ssr package\n- Create lib/supabase/client.ts and server.ts\n- Create utils/supabase/client.ts and server.ts\n- Fix build errors from commit 3dc1eb8\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
