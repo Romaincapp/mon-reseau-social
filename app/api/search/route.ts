@@ -18,12 +18,18 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     // Search users by username or full_name
-    const { data: users, error } = await supabase
+    let searchQuery = supabase
       .from('profiles')
       .select('id, username, full_name, avatar_url, bio, followers_count, following_count')
       .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
-      .neq('id', user?.id || '') // Exclude current user from results
       .limit(20)
+
+    // Exclude current user from results only if logged in
+    if (user?.id) {
+      searchQuery = searchQuery.neq('id', user.id)
+    }
+
+    const { data: users, error } = await searchQuery
 
     if (error) {
       console.error('Search error:', error)
