@@ -531,30 +531,30 @@ const VocalFeed: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto bg-transparent min-h-screen">
-      {/* Stories Carousel */}
-      {user && <StoriesCarousel />}
-
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 pt-6 pb-8 rounded-b-3xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 pt-4 pb-6 rounded-b-3xl relative overflow-hidden">
         {/* Top bar: Logo + Déconnexion */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold vocal-pulse">Voccal</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold vocal-pulse">Voccal</h1>
           {user && (
             <button
               onClick={handleSignOut}
               className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
               aria-label="Se déconnecter"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
             </button>
           )}
         </div>
 
-        {/* Message et bouton play */}
+        {/* Stories Carousel - intégré dans le header */}
+        {user && <StoriesCarousel />}
+
+        {/* Message et bouton play - plus compact */}
         {user && profile && (
-          <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="flex items-center justify-center gap-3 mt-4">
             {/* Texte */}
-            <p className="text-white text-base font-medium">
+            <p className="text-white text-sm font-medium">
               Écoutez le monde, {profile.username}
             </p>
 
@@ -591,10 +591,10 @@ const VocalFeed: React.FC = () => {
               <button
                 onClick={handleStartListening}
                 disabled={posts.length === 0}
-                className="relative w-12 h-12 bg-white text-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                className="relative w-10 h-10 bg-white text-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed z-10"
                 aria-label="Commencer l'écoute"
               >
-                <Play size={20} fill="currentColor" />
+                <Play size={18} fill="currentColor" />
               </button>
             </div>
 
@@ -614,15 +614,6 @@ const VocalFeed: React.FC = () => {
                 }
               }
             `}</style>
-          </div>
-        )}
-
-        {/* Message de bienvenue ou stats */}
-        {user && profile && posts.length > 0 && (
-          <div className="text-center">
-            <p className="text-purple-100 text-sm">
-              {posts.length} voccal{posts.length > 1 ? 's' : ''} disponible{posts.length > 1 ? 's' : ''}
-            </p>
           </div>
         )}
 

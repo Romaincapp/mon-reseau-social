@@ -50,54 +50,52 @@ const StoriesCarousel = () => {
   if (!user || loading) return null;
 
   return (
-    <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 backdrop-blur-sm border-b border-white/10 px-4 py-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
-          {/* Create Story Button */}
+    <div className="px-2">
+      <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
+        {/* Create Story Button */}
+        <button
+          onClick={handleCreateStory}
+          className="flex-shrink-0 flex flex-col items-center gap-1 group"
+        >
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center border-2 border-white/30 group-hover:border-white/50 transition-all">
+              <Plus className="w-6 h-6 text-white" />
+            </div>
+          </div>
+          <span className="text-[10px] text-white/90 font-medium max-w-[60px] truncate">
+            Créer
+          </span>
+        </button>
+
+        {/* Story Groups */}
+        {storyGroups.map((group) => (
           <button
-            onClick={handleCreateStory}
-            className="flex-shrink-0 flex flex-col items-center gap-2 group"
+            key={group.user.id}
+            onClick={() => handleStoryClick(group)}
+            className="flex-shrink-0 flex flex-col items-center gap-1 group"
           >
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center border-2 border-white/20 group-hover:border-white/40 transition-all">
-                <Plus className="w-8 h-8 text-white" />
+              {/* Ring indicator for unviewed stories */}
+              <div className={`absolute inset-0 rounded-full ${
+                group.has_unviewed
+                  ? 'bg-gradient-to-tr from-purple-400 via-pink-400 to-orange-400'
+                  : 'bg-white/30'
+              } p-[2px]`}>
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-700 to-indigo-700 p-[2px]">
+                  <img
+                    src={group.user.avatar_url || '/default-avatar.png'}
+                    alt={group.user.username || 'User'}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
               </div>
+              <div className="w-14 h-14" /> {/* Spacer for absolute positioning */}
             </div>
-            <span className="text-xs text-white/80 font-medium max-w-[80px] truncate">
-              Votre story
+            <span className="text-[10px] text-white/90 font-medium max-w-[60px] truncate">
+              {group.user.id === user.id ? 'Vous' : group.user.username}
             </span>
           </button>
-
-          {/* Story Groups */}
-          {storyGroups.map((group) => (
-            <button
-              key={group.user.id}
-              onClick={() => handleStoryClick(group)}
-              className="flex-shrink-0 flex flex-col items-center gap-2 group"
-            >
-              <div className="relative">
-                {/* Ring indicator for unviewed stories */}
-                <div className={`absolute inset-0 rounded-full ${
-                  group.has_unviewed
-                    ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-500'
-                    : 'bg-gray-600'
-                } p-[2px]`}>
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-900 to-indigo-900 p-[2px]">
-                    <img
-                      src={group.user.avatar_url || '/default-avatar.png'}
-                      alt={group.user.username || 'User'}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="w-16 h-16" /> {/* Spacer for absolute positioning */}
-              </div>
-              <span className="text-xs text-white/80 font-medium max-w-[80px] truncate">
-                {group.user.id === user.id ? 'Vous' : group.user.username}
-              </span>
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       <style jsx>{`
