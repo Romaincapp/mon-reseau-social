@@ -818,6 +818,22 @@ export type Database = {
         Args: { post_id: string }
         Returns: undefined
       }
+      increment_followers_count: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
+      decrement_followers_count: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
+      increment_following_count: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
+      decrement_following_count: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

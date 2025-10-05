@@ -8,6 +8,7 @@ import { useAudioPlayer } from '../../../contexts/AudioPlayerContext';
 import { supabase } from '../../../lib/supabase';
 import AvatarWithWaveform from '../../../components/AvatarWithWaveform';
 import BottomNavigation from '../../../components/BottomNavigation';
+import FollowButton from '../../../components/FollowButton';
 
 interface Post {
   id: string;
@@ -233,11 +234,32 @@ export default function PublicProfilePage() {
             </div>
           )}
 
+          {/* Follow Button */}
+          <div className="mb-4">
+            <FollowButton
+              userId={userId}
+              size="md"
+              variant="primary"
+              onFollowChange={(isFollowing) => {
+                // Optionally refresh profile to update follower count
+                fetchUserProfile();
+              }}
+            />
+          </div>
+
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-5 gap-2">
             <div className="text-center">
               <div className="text-xl font-bold">{stats.postsCount}</div>
               <div className="text-purple-200 text-xs">Vocaux</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl font-bold">{profile.followers_count || 0}</div>
+              <div className="text-purple-200 text-xs">Abonnés</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl font-bold">{profile.following_count || 0}</div>
+              <div className="text-purple-200 text-xs">Abonnements</div>
             </div>
             <div className="text-center">
               <div className="text-xl font-bold">{stats.totalLikes}</div>
@@ -246,10 +268,6 @@ export default function PublicProfilePage() {
             <div className="text-center">
               <div className="text-xl font-bold">{stats.totalViews}</div>
               <div className="text-purple-200 text-xs">Écoutes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold">{formatDuration(stats.totalDuration)}</div>
-              <div className="text-purple-200 text-xs">Durée</div>
             </div>
           </div>
         </div>

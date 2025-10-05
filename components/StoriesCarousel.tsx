@@ -79,6 +79,15 @@ const StoriesCarousel = () => {
           <div className="text-white/60 text-xs">Chargement...</div>
         )}
 
+        {/* No stories message */}
+        {!loading && storyGroups.length === 0 && (
+          <div className="flex-1 text-center py-2">
+            <p className="text-white/60 text-xs">
+              Suivez des profils pour voir leurs stories ici
+            </p>
+          </div>
+        )}
+
         {/* Story Groups */}
         {storyGroups.map((group) => (
           <button

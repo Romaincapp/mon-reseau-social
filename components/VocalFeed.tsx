@@ -11,6 +11,7 @@ import { useTimestampLikes } from '@/hooks/useTimestampLikes';
 import AvatarWithWaveform from './AvatarWithWaveform';
 import InteractiveWaveform from './InteractiveWaveform';
 import StoriesCarousel from './StoriesCarousel';
+import SuggestedProfiles from './SuggestedProfiles';
 
 // Types TypeScript matching database schema
 interface Tag {
@@ -658,6 +659,9 @@ const VocalFeed: React.FC = () => {
 
       {/* Posts */}
       <div className="px-4 py-6 space-y-4 pb-32">
+        {/* Suggested Profiles - only show if user is logged in */}
+        {user && <SuggestedProfiles />}
+
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
