@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Heart, MessageCircle, UserPlus } from 'lucide-react'
+import { ArrowLeft, Heart, MessageCircle, UserPlus, Repeat2, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -35,25 +35,46 @@ export default function NotificationsPage() {
       if (response.ok) {
         const data = await response.json()
         setNotifications(data)
-
-        // Mark all as read
-        const unreadIds = data
-          .filter((n: Notification) => !n.is_read)
-          .map((n: Notification) => n.id)
-
-        if (unreadIds.length > 0) {
-          await fetch('/api/notifications', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notificationIds: unreadIds }),
-          })
-        }
       }
       setLoading(false)
     }
 
     fetchNotifications()
   }, [])
+
+  const markAsRead = async (notificationId: string) => {
+    // Marquer comme lu localement immédiatement
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+    )
+
+    // Envoyer la requête au serveur
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationIds: [notificationId] }),
+    })
+  }
+
+  const markAllAsRead = async () => {
+    const unreadIds = notifications
+      .filter(n => !n.is_read)
+      .map(n => n.id)
+
+    if (unreadIds.length > 0) {
+      // Marquer toutes comme lues localement
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, is_read: true }))
+      )
+
+      // Envoyer la requête au serveur
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationIds: unreadIds }),
+      })
+    }
+  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -63,6 +84,8 @@ export default function NotificationsPage() {
         return <Heart className="w-5 h-5 text-red-500" />
       case 'comment':
         return <MessageCircle className="w-5 h-5 text-green-500" />
+      case 'repost':
+        return <Repeat2 className="w-5 h-5 text-purple-500" />
       default:
         return null
     }
@@ -77,6 +100,8 @@ export default function NotificationsPage() {
         return `${name} a aimé votre post`
       case 'comment':
         return `${name} a commenté votre post`
+      case 'repost':
+        return `${name} a repartagé votre post`
       default:
         return 'Nouvelle notification'
     }
@@ -88,11 +113,20 @@ export default function NotificationsPage() {
         return `/profile/${notification.actor.username}`
       case 'like':
       case 'comment':
+      case 'repost':
         return notification.post ? `/post/${notification.post.id}` : '#'
       default:
         return '#'
     }
   }
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.is_read) {
+      markAsRead(notification.id)
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   const formatTime = (date: string) => {
     const now = new Date()
@@ -127,11 +161,27 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto bg-white min-h-screen">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center gap-4 z-10">
-          <button onClick={() => router.back()}>
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-xl font-bold">Notifications</h1>
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+          <div className="flex items-center gap-4">
+            <button onClick={() => router.back()}>
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-bold flex-1">Notifications</h1>
+            <Link href="/settings/notifications" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <Settings className="w-5 h-5 text-gray-600" />
+            </Link>
+          </div>
+          {unreadCount > 0 && (
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className="text-gray-600">{unreadCount} non lue{unreadCount > 1 ? 's' : ''}</span>
+              <button
+                onClick={markAllAsRead}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Tout marquer comme lu
+              </button>
+            </div>
+          )}
         </div>
 
         {notifications.length === 0 ? (
@@ -144,11 +194,17 @@ export default function NotificationsPage() {
               <Link
                 key={notification.id}
                 href={getNotificationLink(notification)}
-                className={`flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors ${
+                onClick={() => handleNotificationClick(notification)}
+                className={`flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors relative ${
                   !notification.is_read ? 'bg-blue-50' : ''
                 }`}
               >
-                <div className="flex-shrink-0">
+                {/* Pastille pour les notifications non lues */}
+                {!notification.is_read && (
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
+                )}
+
+                <div className="flex-shrink-0 ml-3">
                   {getNotificationIcon(notification.type)}
                 </div>
                 <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
@@ -164,7 +220,7 @@ export default function NotificationsPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">
+                  <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                     {getNotificationText(notification)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">

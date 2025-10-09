@@ -46,15 +46,22 @@ export async function createStory(data: TablesInsert<'stories'>): Promise<Story>
     .from('stories')
     .insert(data)
     .select(`
-      *,
-      profiles:user_id (id, username, avatar_url, full_name)
+      *
     `)
     .single()
 
   if (error) throw error
 
+  // Fetch profile separately
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, full_name')
+    .eq('id', story.user_id)
+    .single()
+
   return {
     ...story,
+    profiles: profile || { id: story.user_id, username: '', avatar_url: null, full_name: null },
     views_count: 0,
     has_viewed: false
   }
@@ -78,7 +85,6 @@ export async function getFollowedUsersStories(userId: string): Promise<Story[]> 
     .from('stories')
     .select(`
       *,
-      profiles:user_id (id, username, avatar_url, full_name),
       story_views!left (id, viewer_id)
     `)
     .gt('expires_at', new Date().toISOString())
@@ -87,8 +93,17 @@ export async function getFollowedUsersStories(userId: string): Promise<Story[]> 
 
   if (error) throw error
 
+  // Fetch profiles separately
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, full_name')
+    .in('id', followingIds)
+
+  const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
+
   return data.map(story => ({
     ...story,
+    profiles: profileMap.get(story.user_id) || { id: story.user_id, username: '', avatar_url: null, full_name: null },
     views_count: story.story_views?.length || 0,
     has_viewed: story.story_views?.some(view => view.viewer_id === userId) || false
   }))
@@ -102,7 +117,6 @@ export async function getUserStories(userId: string, viewerId?: string): Promise
     .from('stories')
     .select(`
       *,
-      profiles:user_id (id, username, avatar_url, full_name),
       story_views!left (id, viewer_id)
     `)
     .eq('user_id', userId)
@@ -111,8 +125,16 @@ export async function getUserStories(userId: string, viewerId?: string): Promise
 
   if (error) throw error
 
+  // Fetch profile separately
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, full_name')
+    .eq('id', userId)
+    .single()
+
   return data.map(story => ({
     ...story,
+    profiles: profile || { id: userId, username: '', avatar_url: null, full_name: null },
     views_count: story.story_views?.length || 0,
     has_viewed: viewerId ? story.story_views?.some(view => view.viewer_id === viewerId) || false : false
   }))
@@ -126,11 +148,9 @@ export async function getStoryById(storyId: string, viewerId?: string): Promise<
     .from('stories')
     .select(`
       *,
-      profiles:user_id (id, username, avatar_url, full_name),
       story_views (
         viewer_id,
-        viewed_at,
-        profiles:viewer_id (username, avatar_url)
+        viewed_at
       )
     `)
     .eq('id', storyId)
@@ -138,10 +158,35 @@ export async function getStoryById(storyId: string, viewerId?: string): Promise<
 
   if (error) throw error
 
+  // Fetch profile separately
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, full_name')
+    .eq('id', data.user_id)
+    .single()
+
+  // Fetch viewer profiles if there are views
+  let viewsWithProfiles: any[] = []
+  if (data.story_views && data.story_views.length > 0) {
+    const viewerIds = data.story_views.map((v: any) => v.viewer_id)
+    const { data: viewerProfiles } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', viewerIds)
+
+    const viewerMap = new Map(viewerProfiles?.map(p => [p.id, p]) || [])
+    viewsWithProfiles = data.story_views.map((view: any) => ({
+      ...view,
+      profiles: viewerMap.get(view.viewer_id) || null
+    }))
+  }
+
   return {
     ...data,
+    profiles: profile || { id: data.user_id, username: '', avatar_url: null, full_name: null },
+    story_views: viewsWithProfiles,
     views_count: data.story_views?.length || 0,
-    has_viewed: viewerId ? data.story_views?.some(view => view.viewer_id === viewerId) || false : false
+    has_viewed: viewerId ? data.story_views?.some((view: any) => view.viewer_id === viewerId) || false : false
   }
 }
 
@@ -197,12 +242,11 @@ export async function getStoriesGroupedByUser(currentUserId: string): Promise<Ar
   stories: Story[]
   has_unviewed: boolean
 }>> {
-  // Get current user's stories with explicit join
+  // Get current user's stories
   const { data: myStories, error: myStoriesError } = await supabase
     .from('stories')
     .select(`
       *,
-      profiles!stories_user_id_fkey (id, username, avatar_url, full_name),
       story_views!left (id, viewer_id)
     `)
     .eq('user_id', currentUserId)
@@ -214,6 +258,13 @@ export async function getStoriesGroupedByUser(currentUserId: string): Promise<Ar
   }
 
   console.log('My stories raw:', myStories)
+
+  // Fetch current user's profile
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, full_name')
+    .eq('id', currentUserId)
+    .single()
 
   // Get followed users' stories
   const { data: followedStories, error: followedError } = await supabase
@@ -232,6 +283,7 @@ export async function getStoriesGroupedByUser(currentUserId: string): Promise<Ar
   if (myStories && myStories.length > 0) {
     grouped[currentUserId] = myStories.map(story => ({
       ...story,
+      profiles: myProfile || { id: currentUserId, username: '', avatar_url: null, full_name: null },
       views_count: story.story_views?.length || 0,
       has_viewed: true // User has always "viewed" their own stories
     }))

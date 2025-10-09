@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f7f5;
-  --foreground: #171717;
+  --background: hsla(0, 0%, 100%, 0);
+  --foreground: #17171700;
   --wave-color: #9b87f5;
 }
 
@@ -15,7 +15,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0a0a0ac4;
     --foreground: #ededed;
     --wave-color: #7c3aed;
   }
@@ -25,81 +25,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Animation des ondes sonores de fond - Première vague */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 40px,
-      var(--wave-color) 40px,
-      var(--wave-color) 44px
-    );
-  opacity: 0;
-  animation: wavePass 10s ease-in-out infinite;
-  transform: translateX(-100%);
-}
-
-/* Deuxième vague d'ondes */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 60px,
-      var(--wave-color) 60px,
-      var(--wave-color) 65px
-    );
-  opacity: 0;
-  animation: wavePass 14s ease-in-out infinite 3s;
-  transform: translateX(-100%);
-}
-
-@keyframes wavePass {
-  0% {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.08;
-  }
-  50% {
-    transform: translateX(100%);
-    opacity: 0.08;
-  }
-  60% {
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-/* S'assurer que le contenu est au-dessus de l'animation */
-body > * {
-  position: relative;
-  z-index: 1;
 }
 
 /* Animation pulse pour le titre Vocal */
@@ -123,4 +48,153 @@ body > * {
 
 .vocal-pulse {
   animation: soundPulse 2s ease-in-out infinite;
+}
+
+/* Animations d'ondes pour le feed vocal */
+
+/* Ondes verticales qui glissent de gauche à droite */
+@keyframes wave-slide-1 {
+  0% {
+    transform: translateX(-100%) scaleY(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scaleY(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes wave-slide-2 {
+  0% {
+    transform: translateX(-100%) scaleY(1);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scaleY(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes wave-slide-3 {
+  0% {
+    transform: translateX(-100%) scaleY(1.1);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scaleY(0.8);
+    opacity: 0;
+  }
+}
+
+.animate-wave-slide-1 {
+  animation: wave-slide-1 12s ease-in-out infinite;
+}
+
+.animate-wave-slide-2 {
+  animation: wave-slide-2 15s ease-in-out infinite 3s;
+}
+
+.animate-wave-slide-3 {
+  animation: wave-slide-3 18s ease-in-out infinite 6s;
+}
+
+/* Ondes circulaires pulsantes pour l'ambiance */
+@keyframes pulse-wave-1 {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-wave-2 {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.8) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-wave-3 {
+  0%, 100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(2);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-wave-1 {
+  animation: pulse-wave-1 8s ease-in-out infinite;
+}
+
+.animate-pulse-wave-2 {
+  animation: pulse-wave-2 10s ease-in-out infinite 2s;
+}
+
+.animate-pulse-wave-3 {
+  animation: pulse-wave-3 12s ease-in-out infinite 4s;
+}
+
+/* Ondes autour des posts en cours de lecture */
+@keyframes post-wave-1 {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes post-wave-2 {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes post-wave-3 {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+
+.animate-post-wave-1 {
+  animation: post-wave-1 1.5s ease-out infinite;
+}
+
+.animate-post-wave-2 {
+  animation: post-wave-2 1.5s ease-out infinite 0.5s;
+}
+
+.animate-post-wave-3 {
+  animation: post-wave-3 1.5s ease-out infinite 1s;
 }

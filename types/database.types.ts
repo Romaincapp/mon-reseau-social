@@ -297,6 +297,50 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          notify_on_comment: boolean | null
+          notify_on_follow: boolean | null
+          notify_on_like: boolean | null
+          notify_on_mention: boolean | null
+          notify_on_repost: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notify_on_comment?: boolean | null
+          notify_on_follow?: boolean | null
+          notify_on_like?: boolean | null
+          notify_on_mention?: boolean | null
+          notify_on_repost?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notify_on_comment?: boolean | null
+          notify_on_follow?: boolean | null
+          notify_on_like?: boolean | null
+          notify_on_mention?: boolean | null
+          notify_on_repost?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string
@@ -601,77 +645,6 @@ export type Database = {
           },
         ]
       }
-      stories: {
-        Row: {
-          id: string
-          user_id: string
-          audio_url: string
-          duration: number
-          created_at: string
-          expires_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          audio_url: string
-          duration: number
-          created_at?: string
-          expires_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          audio_url?: string
-          duration?: number
-          created_at?: string
-          expires_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stories_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      story_views: {
-        Row: {
-          id: string
-          story_id: string
-          viewer_id: string
-          viewed_at: string
-        }
-        Insert: {
-          id?: string
-          story_id: string
-          viewer_id: string
-          viewed_at?: string
-        }
-        Update: {
-          id?: string
-          story_id?: string
-          viewer_id?: string
-          viewed_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "story_views_story_id_fkey"
-            columns: ["story_id"]
-            isOneToOne: false
-            referencedRelation: "stories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "story_views_viewer_id_fkey"
-            columns: ["viewer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       reposts: {
         Row: {
           comment: string | null
@@ -707,6 +680,62 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stories: {
+        Row: {
+          audio_url: string
+          created_at: string
+          duration: number
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          duration: number
+          expires_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          duration?: number
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
             referencedColumns: ["id"]
           },
         ]
@@ -776,44 +805,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_direct_conversation: {
-        Args: { other_user_id: string }
-        Returns: string
-      }
-      create_notification: {
-        Args: {
-          p_actor_id: string
-          p_comment_id?: string
-          p_post_id?: string
-          p_type: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      get_followed_users_stories: {
-        Args: { p_user_id: string }
-        Returns: {
-          id: string
-          user_id: string
-          audio_url: string
-          duration: number
-          created_at: string
-          expires_at: string
-          profiles: Json
-          views_count: number
-          has_viewed: boolean
-        }[]
-      }
-      get_trending_posts: {
-        Args: { time_window?: unknown }
-        Returns: {
-          comment_count: number
-          engagement_score: number
-          like_count: number
-          post_id: string
-          view_count: number
-        }[]
-      }
       increment_views_count: {
         Args: { post_id: string }
         Returns: undefined
@@ -833,6 +824,24 @@ export type Database = {
       decrement_following_count: {
         Args: { user_id: string }
         Returns: undefined
+      }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_actor_id: string
+          p_type: string
+          p_post_id?: string
+          p_comment_id?: string
+        }
+        Returns: undefined
+      }
+      should_notify: {
+        Args: { p_user_id: string; p_notification_type: string }
+        Returns: boolean
+      }
+      get_followed_users_stories: {
+        Args: { p_user_id: string }
+        Returns: any[]
       }
     }
     Enums: {

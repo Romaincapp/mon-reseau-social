@@ -85,7 +85,7 @@ const SuggestedProfiles = () => {
   if (profiles.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Profils suggérés
       </h3>
@@ -93,7 +93,7 @@ const SuggestedProfiles = () => {
         {profiles.map((profile) => (
           <div
             key={profile.id}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+            className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors"
           >
             <div
               className="flex items-center gap-3 flex-1 cursor-pointer"

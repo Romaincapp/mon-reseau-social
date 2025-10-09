@@ -139,12 +139,20 @@ const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-2xl p-4 shadow-sm border transition-all duration-300 ${
+      className={`bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border transition-all duration-300 relative ${
         isCurrentlySelected
           ? 'border-purple-300 shadow-lg ring-2 ring-purple-100'
           : 'border-gray-100 hover:shadow-md'
       }`}
     >
+      {/* Ondes circulaires autour du post en cours de lecture */}
+      {isCurrentlyPlaying && (
+        <div className="absolute inset-0 pointer-events-none rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 rounded-2xl border-2 border-purple-400 opacity-0 animate-post-wave-1" />
+          <div className="absolute inset-0 rounded-2xl border-2 border-purple-300 opacity-0 animate-post-wave-2" />
+          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400 opacity-0 animate-post-wave-3" />
+        </div>
+      )}
       {/* User Info */}
       <div className="flex items-center justify-between mb-3">
         <button
@@ -532,9 +540,24 @@ const VocalFeed: React.FC = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-transparent min-h-screen">
+    <div className="max-w-md mx-auto bg-transparent min-h-screen relative overflow-hidden">
+      {/* Ondes sonores d'arrière-plan - ambiance vocale */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Fond avec dégradé */}
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-50/50 via-white to-blue-50/40" />
+
+        {/* Ondes circulaires pulsantes - BEAUCOUP plus visibles */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-purple-500/20 animate-pulse-wave-1 blur-3xl" />
+        <div className="absolute top-2/3 right-1/4 w-80 h-80 rounded-full bg-blue-500/20 animate-pulse-wave-2 blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/3 w-[22rem] h-[22rem] rounded-full bg-purple-400/20 animate-pulse-wave-3 blur-3xl" />
+
+        {/* Ondes supplémentaires pour plus d'effet */}
+        <div className="absolute top-1/2 left-1/2 w-72 h-72 rounded-full bg-pink-400/15 animate-pulse-wave-1 blur-3xl" style={{animationDelay: '1s'}} />
+        <div className="absolute top-1/3 right-1/3 w-64 h-64 rounded-full bg-indigo-400/15 animate-pulse-wave-2 blur-3xl" style={{animationDelay: '2s'}} />
+      </div>
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 pt-4 pb-6 rounded-b-3xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 pt-4 pb-6 rounded-b-3xl relative overflow-hidden z-10">
         {/* Top bar: Logo + Déconnexion */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold vocal-pulse">Voccal</h1>
@@ -659,7 +682,7 @@ const VocalFeed: React.FC = () => {
       </div>
 
       {/* Posts */}
-      <div className="px-4 py-6 space-y-4 pb-32">
+      <div className="px-4 py-6 space-y-4 pb-32 relative z-10">
         {/* Suggested Profiles - only show if user is logged in */}
         {user && <SuggestedProfiles />}
 
