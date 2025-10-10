@@ -13,8 +13,8 @@ export async function GET() {
     .from('notifications')
     .select(`
       *,
-      actor:actor_id(id, username, avatar_url, full_name),
-      post:post_id(id, audio_url, duration)
+      actor:profiles!notifications_actor_id_fkey(id, username, avatar_url, full_name),
+      post:posts!notifications_post_id_fkey(id, audio_url, duration)
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
