@@ -28,7 +28,7 @@ export default function BottomNavigation() {
   };
 
   const handleHomeClick = (): void => {
-    router.push('/');
+    router.push('/feed');
   };
 
   const handleSearchClick = (): void => {
@@ -51,7 +51,7 @@ export default function BottomNavigation() {
         <button
           onClick={handleHomeClick}
           className={`p-3 transition-colors duration-200 ${
-            isActive('/') ? 'text-purple-500' : 'text-gray-400 hover:text-purple-500'
+            isActive('/feed') ? 'text-purple-500' : 'text-gray-400 hover:text-purple-500'
           }`}
           aria-label="Accueil"
         >

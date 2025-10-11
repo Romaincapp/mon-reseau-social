@@ -263,7 +263,7 @@ export default function PublicProfilePage() {
         <div className="text-center py-12 px-6">
           <p className="text-gray-500 text-lg">{error || 'Profil introuvable'}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/feed')}
             className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
           >
             Retour au feed
@@ -279,7 +279,7 @@ export default function PublicProfilePage() {
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-8 rounded-b-3xl">
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/feed')}
             className="text-white/80 hover:text-white"
           >
             <ArrowLeft className="w-6 h-6" />

@@ -20,7 +20,7 @@ export default function Login() {
       if (!profile.is_profile_complete) {
         router.push('/auth/complete-profile')
       } else {
-        router.push('/')
+        router.push('/feed')
       }
     }
   }, [user, profile, authLoading, router])

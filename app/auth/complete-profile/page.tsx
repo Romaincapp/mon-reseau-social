@@ -21,9 +21,9 @@ export default function CompleteProfile() {
         return
       }
 
-      // Si le profil est déjà complet, rediriger vers l'accueil
+      // Si le profil est déjà complet, rediriger vers le feed
       if (profile?.is_profile_complete) {
-        router.push('/')
+        router.push('/feed')
         return
       }
 
@@ -72,7 +72,7 @@ export default function CompleteProfile() {
     if (error) {
       setError(error.message || 'Erreur lors de la mise à jour du profil')
     } else {
-      router.push('/')
+      router.push('/feed')
     }
 
     setLoading(false)

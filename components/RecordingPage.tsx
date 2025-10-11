@@ -356,7 +356,7 @@ const availableTags: Tag[] = [
 
         console.log('✅ Story créée');
         alert('Story publiée avec succès ! 🎉');
-        router.push('/');
+        router.push('/feed');
       } else {
         // Créer un post dans la base de données
         const { data: postData, error: postError } = await supabase
@@ -398,7 +398,7 @@ const availableTags: Tag[] = [
 
         console.log('✅ Tags associés');
         alert('Voccal publié avec succès ! 🎉');
-        router.push('/'); // Retour au fil d'actualité
+        router.push('/feed'); // Retour au fil d'actualité
       }
 
     } catch (error) {

@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     setLoading(true);
     await signOut();
-    router.push('/');
+    router.push('/auth/login');
   };
 
   const handleDeleteAccount = async () => {
@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
       // For now, just sign out
       await signOut();
-      router.push('/');
+      router.push('/auth/login');
       alert('Compte supprimé avec succès');
 
     } catch (error) {

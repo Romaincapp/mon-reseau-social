@@ -507,7 +507,7 @@ const VocalFeed: React.FC = () => {
   const handleSignOut = async (): Promise<void> => {
     try {
       await signOut();
-      router.push('/');
+      router.push('/auth/login');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }

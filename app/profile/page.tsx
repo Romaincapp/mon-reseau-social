@@ -303,7 +303,7 @@ export default function ProfilePage() {
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-8 rounded-b-3xl">
           <div className="flex items-center justify-between mb-6">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/feed')}
               className="text-white/80 hover:text-white"
             >
               <ArrowLeft className="w-6 h-6" />
