@@ -89,14 +89,21 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({ conversationId 
       const { data: participants, error: participantsError } = await supabase
         .from('conversation_participants')
         .select(`
+          user_id,
           profiles (id, username, full_name, avatar_url)
         `)
         .eq('conversation_id', conversationId)
-        .neq('user_id', user.id)
-        .single();
+        .neq('user_id', user.id);
 
-      if (participantsError) throw participantsError;
-      setOtherUser(participants?.profiles as Profile);
+      if (participantsError) {
+        console.error('Error fetching participants:', participantsError);
+        throw participantsError;
+      }
+
+      // Get the first participant (should be the only one in a 1-to-1 conversation)
+      if (participants && participants.length > 0) {
+        setOtherUser(participants[0].profiles as Profile);
+      }
 
       // Get messages
       const { data: messagesData, error: messagesError } = await supabase

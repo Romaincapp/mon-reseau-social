@@ -94,6 +94,24 @@ export function useLikes(postId: string, initialLikesCount: number = 0) {
           console.error('Erreur mise à jour compteur:', updateError)
         }
 
+        // Créer une notification pour l'auteur du post (si ce n'est pas soi-même)
+        const { data: post } = await supabase
+          .from('posts')
+          .select('user_id')
+          .eq('id', postId)
+          .single()
+
+        if (post && post.user_id !== user.id) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: post.user_id,
+              actor_id: user.id,
+              type: 'like',
+              post_id: postId
+            })
+        }
+
         setIsLiked(true)
         setLikesCount(newCount)
       }
