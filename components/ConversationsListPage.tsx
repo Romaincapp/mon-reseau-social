@@ -50,82 +50,79 @@ const ConversationsListPage: React.FC = () => {
     if (!user) return;
 
     try {
-      // Get user's conversations
-      const { data: participations, error: participationsError } = await supabase
+      // Get all conversations for the current user
+      const { data: myParticipations, error: myError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user.id);
+
+      if (myError) throw myError;
+
+      const conversationIds = myParticipations?.map(p => p.conversation_id) || [];
+      if (conversationIds.length === 0) {
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get all conversations with their data
+      const { data: conversationsData, error: convError } = await supabase
+        .from('conversations')
+        .select('id, is_group, name, updated_at')
+        .in('id', conversationIds);
+
+      if (convError) throw convError;
+
+      // Get ALL participants for these conversations (including profiles)
+      const { data: allParticipants, error: participantsError } = await supabase
         .from('conversation_participants')
         .select(`
           conversation_id,
-          conversations (
-            id,
-            is_group,
-            name,
-            updated_at
-          )
+          user_id,
+          profiles (id, username, full_name, avatar_url)
         `)
-        .eq('user_id', user.id);
+        .in('conversation_id', conversationIds);
 
-      if (participationsError) throw participationsError;
+      if (participantsError) throw participantsError;
 
-      // Fetch details for each conversation
-      const conversationsData = await Promise.all(
-        (participations || []).map(async (participation: any) => {
-          const conv = participation.conversations;
+      // Get all messages (last message for each conversation)
+      const { data: allMessages, error: messagesError } = await supabase
+        .from('messages')
+        .select('id, conversation_id, content, audio_url, created_at, sender_id')
+        .in('conversation_id', conversationIds)
+        .order('created_at', { ascending: false });
 
-          // Get other participant (for 1-to-1 conversations)
-          let otherParticipant: Profile | null = null;
-          if (!conv.is_group) {
-            const { data: participants, error: participantError } = await supabase
-              .from('conversation_participants')
-              .select(`
-                user_id,
-                profiles!inner (id, username, full_name, avatar_url)
-              `)
-              .eq('conversation_id', conv.id)
-              .neq('user_id', user.id)
-              .limit(1);
+      if (messagesError) throw messagesError;
 
-            if (!participantError && participants && participants.length > 0) {
-              // Extract the profile from the nested structure
-              const participantData = participants[0] as any;
-              if (participantData.profiles) {
-                otherParticipant = participantData.profiles as Profile;
-              }
-            }
-          }
+      // Process the data
+      const processedConversations = conversationsData?.map(conv => {
+        // Find other participant (for 1-to-1 conversations)
+        const otherParticipant = allParticipants
+          ?.filter(p => p.conversation_id === conv.id && p.user_id !== user.id)
+          .map(p => p.profiles)?.[0] || null;
 
-          // Get last message
-          const { data: lastMessage } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conv.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+        // Find last message for this conversation
+        const lastMessage = allMessages?.find(m => m.conversation_id === conv.id) || null;
 
-          // Count unread messages
-          const { data: lastRead } = await supabase
-            .from('conversation_participants')
-            .select('last_read_at')
-            .eq('conversation_id', conv.id)
-            .eq('user_id', user.id)
-            .single();
+        // Find last_read_at for this user
+        const myParticipation = myParticipations?.find(p => p.conversation_id === conv.id);
+        const lastReadAt = myParticipation?.last_read_at || '1970-01-01';
 
-          const { count: unreadCount } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .gt('created_at', lastRead?.last_read_at || '1970-01-01');
+        // Count unread messages
+        const unreadCount = allMessages?.filter(m =>
+          m.conversation_id === conv.id &&
+          new Date(m.created_at) > new Date(lastReadAt)
+        ).length || 0;
 
-          return {
-            ...conv,
-            otherParticipant,
-            lastMessage,
-            unreadCount: unreadCount || 0
-          };
-        })
-      );
+        return {
+          ...conv,
+          otherParticipant,
+          lastMessage,
+          unreadCount
+        };
+      }) || [];
 
-      setConversations(conversationsData.sort((a, b) =>
+      setConversations(processedConversations.sort((a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       ));
     } catch (error) {
