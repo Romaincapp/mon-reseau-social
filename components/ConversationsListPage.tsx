@@ -82,9 +82,9 @@ const ConversationsListPage: React.FC = () => {
               `)
               .eq('conversation_id', conv.id)
               .neq('user_id', user.id)
-              .single();
+              .limit(1);
 
-            otherParticipant = participants?.profiles;
+            otherParticipant = participants?.[0]?.profiles;
           }
 
           // Get last message
