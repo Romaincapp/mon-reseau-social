@@ -105,7 +105,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
         ${variantClasses[variant]}
         rounded-full font-medium transition-all
         disabled:opacity-50 disabled:cursor-not-allowed
-        flex items-center gap-2
+        flex items-center gap-2 whitespace-nowrap
       `}
     >
       {loading ? (

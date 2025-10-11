@@ -129,7 +129,7 @@ const SuggestedProfiles = () => {
                 </div>
               </div>
             </div>
-            <div className="ml-2">
+            <div className="ml-2 flex-shrink-0">
               <FollowButton
                 userId={profile.id}
                 size="sm"
