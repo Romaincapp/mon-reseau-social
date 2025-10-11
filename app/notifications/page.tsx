@@ -5,6 +5,7 @@ import { ArrowLeft, Heart, MessageCircle, UserPlus, Repeat2, Settings } from 'lu
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useAuth } from '@/contexts/AuthContext'
 
 type Notification = {
   id: string
@@ -26,21 +27,36 @@ type Notification = {
 
 export default function NotificationsPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const response = await fetch('/api/notifications')
-      if (response.ok) {
-        const data = await response.json()
-        setNotifications(data)
+      // Only fetch if user is authenticated
+      if (!user) {
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      try {
+        const response = await fetch('/api/notifications')
+        if (response.ok) {
+          const data = await response.json()
+          setNotifications(data)
+        } else if (response.status === 401) {
+          // User not authenticated, redirect to login
+          router.push('/auth/login')
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchNotifications()
-  }, [])
+  }, [user, router])
 
   const markAsRead = async (notificationId: string) => {
     // Marquer comme lu localement immédiatement
