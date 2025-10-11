@@ -62,6 +62,9 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+      alert('Erreur lors de l\'action. Veuillez réessayer.');
+      // Refresh status in case of error
+      await checkFollowStatus();
     } finally {
       setLoading(false);
     }

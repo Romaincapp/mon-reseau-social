@@ -13,12 +13,17 @@ export default function Home() {
       if (!user) {
         // Pas d'utilisateur connecté, rediriger vers login
         router.push('/auth/login')
-      } else if (user && profile) {
-        // Utilisateur connecté avec profil complet, rediriger vers feed
-        if (profile.is_profile_complete) {
-          router.push('/feed')
+      } else if (user) {
+        // Utilisateur connecté
+        if (profile) {
+          // Profil existe, vérifier s'il est complet
+          if (profile.is_profile_complete) {
+            router.push('/feed')
+          } else {
+            router.push('/auth/complete-profile')
+          }
         } else {
-          // Profil incomplet, rediriger vers complétion du profil
+          // Pas de profil, rediriger vers complétion du profil
           router.push('/auth/complete-profile')
         }
       }
