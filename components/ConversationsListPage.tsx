@@ -72,19 +72,25 @@ const ConversationsListPage: React.FC = () => {
           const conv = participation.conversations;
 
           // Get other participant (for 1-to-1 conversations)
-          let otherParticipant = null;
+          let otherParticipant: Profile | null = null;
           if (!conv.is_group) {
-            const { data: participants } = await supabase
+            const { data: participants, error: participantError } = await supabase
               .from('conversation_participants')
               .select(`
                 user_id,
-                profiles (id, username, full_name, avatar_url)
+                profiles!inner (id, username, full_name, avatar_url)
               `)
               .eq('conversation_id', conv.id)
               .neq('user_id', user.id)
               .limit(1);
 
-            otherParticipant = participants?.[0]?.profiles;
+            if (!participantError && participants && participants.length > 0) {
+              // Extract the profile from the nested structure
+              const participantData = participants[0] as any;
+              if (participantData.profiles) {
+                otherParticipant = participantData.profiles as Profile;
+              }
+            }
           }
 
           // Get last message

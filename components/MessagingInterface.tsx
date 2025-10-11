@@ -90,7 +90,7 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({ conversationId 
         .from('conversation_participants')
         .select(`
           user_id,
-          profiles (id, username, full_name, avatar_url)
+          profiles!inner (id, username, full_name, avatar_url)
         `)
         .eq('conversation_id', conversationId)
         .neq('user_id', user.id);
@@ -102,7 +102,10 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({ conversationId 
 
       // Get the first participant (should be the only one in a 1-to-1 conversation)
       if (participants && participants.length > 0) {
-        setOtherUser(participants[0].profiles as Profile);
+        const participantData = participants[0] as any;
+        if (participantData.profiles) {
+          setOtherUser(participantData.profiles as Profile);
+        }
       }
 
       // Get messages

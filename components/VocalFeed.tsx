@@ -63,6 +63,7 @@ interface PostCardProps {
   post: Post;
   onPlay: (post: Post) => void;
   onDelete: (post: Post) => Promise<void>;
+  onEdit: (post: Post) => void;
   onComment: (postId: string) => void;
   isCurrentlyPlaying: boolean;
   isCurrentlySelected: boolean;
@@ -75,6 +76,7 @@ const PostCard: React.FC<PostCardProps> = ({
   post,
   onPlay,
   onDelete,
+  onEdit,
   onComment,
   isCurrentlyPlaying,
   isCurrentlySelected,
@@ -222,9 +224,19 @@ const PostCard: React.FC<PostCardProps> = ({
                   {/* Menu dropdown */}
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
                     <button
+                      onClick={() => {
+                        onEdit(post);
+                        onMenuToggle();
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-left text-blue-600 hover:bg-blue-50 transition-colors rounded-t-lg"
+                    >
+                      <Edit size={16} />
+                      <span className="text-sm font-medium">Modifier</span>
+                    </button>
+                    <button
                       onClick={() => onDelete(post)}
                       disabled={isDeleting}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors rounded-t-lg disabled:opacity-50"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors rounded-b-lg disabled:opacity-50 border-t border-gray-100"
                     >
                       {isDeleting ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent" />
@@ -401,6 +413,8 @@ const VocalFeed: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editCaption, setEditCaption] = useState('');
 
   // Utiliser le context audio global
   const {
@@ -583,6 +597,47 @@ const VocalFeed: React.FC = () => {
     } finally {
       setDeletingPostId(null);
     }
+  };
+
+  // Fonction pour éditer un post
+  const handleEditPost = (post: Post): void => {
+    setEditingPostId(post.id);
+    setEditCaption(post.caption || '');
+  };
+
+  // Fonction pour sauvegarder les modifications
+  const handleSaveEdit = async (): Promise<void> => {
+    if (!editingPostId || !user) return;
+
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({ caption: editCaption })
+        .eq('id', editingPostId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setPosts(posts.map(p =>
+        p.id === editingPostId ? { ...p, caption: editCaption } : p
+      ));
+
+      // Réinitialiser l'état d'édition
+      setEditingPostId(null);
+      setEditCaption('');
+
+      console.log('✅ Post modifié avec succès');
+    } catch (error) {
+      console.error('❌ Erreur lors de la modification:', error);
+      alert('Erreur lors de la modification du voccal');
+    }
+  };
+
+  // Fonction pour annuler l'édition
+  const handleCancelEdit = (): void => {
+    setEditingPostId(null);
+    setEditCaption('');
   };
 
   if (error) {
@@ -768,6 +823,7 @@ const VocalFeed: React.FC = () => {
                 post={post}
                 onPlay={handlePlay}
                 onDelete={handleDeletePost}
+                onEdit={handleEditPost}
                 onComment={handleComment}
                 isCurrentlyPlaying={isCurrentlyPlaying}
                 isCurrentlySelected={isCurrentlySelected}
@@ -779,6 +835,50 @@ const VocalFeed: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editingPostId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Modifier le voccal</h2>
+              <button
+                onClick={handleCancelEdit}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <textarea
+              value={editCaption}
+              onChange={(e) => setEditCaption(e.target.value)}
+              placeholder="Modifiez votre légende..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              rows={4}
+              maxLength={500}
+            />
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-500">
+                {editCaption.length}/500 caractères
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-full font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-medium transition-colors"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigation />
