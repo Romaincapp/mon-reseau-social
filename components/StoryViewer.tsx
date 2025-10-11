@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Share2, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserStories, markStoryAsViewed, type Story } from '@/lib/stories';
 import { useRouter } from 'next/navigation';
+import { useShare } from '@/hooks/useShare';
 
 interface StoryViewerProps {
   userId: string;
@@ -13,12 +14,15 @@ interface StoryViewerProps {
 const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
   const { user } = useAuth();
   const router = useRouter();
+  const { share, copyToClipboard, canShare } = useShare();
   const [stories, setStories] = useState<Story[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [showCopied, setShowCopied] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -53,28 +57,39 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
 
     setCurrentIndex(index);
     setProgress(0);
+    setAudioError(null);
 
     // Mark as viewed
     if (user && !stories[index].has_viewed) {
-      await markStoryAsViewed(stories[index].id, user.id);
-      stories[index].has_viewed = true;
-    }
-
-    audioRef.current.src = stories[index].audio_url;
-    audioRef.current.play();
-    setIsPlaying(true);
-
-    // Update progress
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const percent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-        setProgress(percent);
+      try {
+        await markStoryAsViewed(stories[index].id, user.id);
+        stories[index].has_viewed = true;
+      } catch (error) {
+        console.error('Error marking story as viewed:', error);
       }
-    }, 100);
+    }
+
+    try {
+      audioRef.current.src = stories[index].audio_url;
+      await audioRef.current.play();
+      setIsPlaying(true);
+
+      // Update progress
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+
+      progressIntervalRef.current = setInterval(() => {
+        if (audioRef.current) {
+          const percent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+          setProgress(percent);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setAudioError('Impossible de lire cette story');
+      setIsPlaying(false);
+    }
   };
 
   const handleAudioEnd = () => {
@@ -85,25 +100,32 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
     }
   };
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (!audioRef.current) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-
-      progressIntervalRef.current = setInterval(() => {
-        if (audioRef.current) {
-          const percent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-          setProgress(percent);
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
         }
-      }, 100);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+        setAudioError(null);
+
+        progressIntervalRef.current = setInterval(() => {
+          if (audioRef.current) {
+            const percent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+            setProgress(percent);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error toggling play/pause:', error);
+      setAudioError('Erreur de lecture audio');
+      setIsPlaying(false);
     }
   };
 
@@ -136,6 +158,30 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
       audioRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
+  };
+
+  const handleShare = async () => {
+    const currentStory = stories[currentIndex];
+    if (!currentStory) return;
+
+    const shareUrl = `${window.location.origin}/story/${userId}`;
+    const success = await share({
+      title: `Story de ${currentStory.profiles.username || currentStory.profiles.full_name}`,
+      text: 'Regarde cette story !',
+      url: shareUrl
+    });
+
+    if (success && !canShare) {
+      // If fallback to clipboard was used
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    }
+  };
+
+  const handleAudioError = () => {
+    console.error('Audio failed to load');
+    setAudioError('Impossible de charger cette story');
+    setIsPlaying(false);
   };
 
   if (loading) {
@@ -222,10 +268,17 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
         )}
 
         {/* Center area - play/pause */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center flex-col gap-4">
+          {audioError && (
+            <div className="bg-red-500/90 backdrop-blur-sm px-4 py-2 rounded-full">
+              <p className="text-white text-sm font-medium">{audioError}</p>
+            </div>
+          )}
+
           <button
             onClick={handlePlayPause}
             className="bg-white/20 hover:bg-white/30 backdrop-blur-sm p-6 rounded-full transition-all transform hover:scale-110"
+            disabled={!!audioError}
           >
             {isPlaying ? (
               <Pause className="w-12 h-12 text-white" />
@@ -256,16 +309,33 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
             </p>
           </div>
 
-          <button
-            onClick={toggleMute}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm p-3 rounded-full transition-colors"
-          >
-            {isMuted ? (
-              <VolumeX className="w-6 h-6 text-white" />
-            ) : (
-              <Volume2 className="w-6 h-6 text-white" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm p-3 rounded-full transition-colors relative"
+              title="Partager"
+            >
+              {showCopied ? (
+                <Check className="w-6 h-6 text-green-400" />
+              ) : canShare ? (
+                <Share2 className="w-6 h-6 text-white" />
+              ) : (
+                <Copy className="w-6 h-6 text-white" />
+              )}
+            </button>
+
+            <button
+              onClick={toggleMute}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm p-3 rounded-full transition-colors"
+              title={isMuted ? "Activer le son" : "Couper le son"}
+            >
+              {isMuted ? (
+                <VolumeX className="w-6 h-6 text-white" />
+              ) : (
+                <Volume2 className="w-6 h-6 text-white" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -273,7 +343,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ userId }) => {
       <audio
         ref={audioRef}
         onEnded={handleAudioEnd}
+        onError={handleAudioError}
         className="hidden"
+        preload="auto"
       />
     </div>
   );

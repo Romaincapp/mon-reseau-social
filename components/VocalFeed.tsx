@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLikes } from '@/hooks/useLikes';
 import { useTimestampLikes } from '@/hooks/useTimestampLikes';
 import { useRepost } from '@/hooks/useRepost';
+import { useShare } from '@/hooks/useShare';
 import AvatarWithWaveform from './AvatarWithWaveform';
 import InteractiveWaveform from './InteractiveWaveform';
 import StoriesCarousel from './StoriesCarousel';
@@ -87,6 +88,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const { timestampLikes, addTimestampLike } = useTimestampLikes(post.id, user?.id);
   const { isReposted, repostsCount, loading: repostLoading, toggleRepost } = useRepost(post.id, post.reposts_count ?? 0, user?.id);
   const { currentTime, seekTo } = useAudioPlayer();
+  const { share, canShare } = useShare();
+  const [showCopied, setShowCopied] = React.useState(false);
 
   const getRandomAvatar = (): string => {
     const avatars: string[] = ['👩‍🎤', '👨‍💼', '🧘‍♀️', '👩‍💻', '👨‍🎨', '👩‍🔬'];
@@ -138,6 +141,23 @@ const PostCard: React.FC<PostCardProps> = ({
       return;
     }
     await addTimestampLike(timestamp);
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/post/${post.id}`;
+    const username = post.profiles?.username || post.profiles?.full_name || 'Un utilisateur';
+
+    const success = await share({
+      title: `Voccal de ${username}`,
+      text: post.caption || 'Écoutez ce voccal !',
+      url: shareUrl
+    });
+
+    if (success && !canShare) {
+      // If fallback to clipboard was used
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    }
   };
 
   return (
@@ -353,10 +373,21 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         <button
-          className="hover:text-purple-500 transition-colors duration-200"
+          onClick={handleShare}
+          className="hover:text-purple-500 transition-colors duration-200 relative"
           aria-label="Partager"
+          title="Partager"
         >
-          <Share2 size={20} />
+          {showCopied ? (
+            <>
+              <Share2 size={20} className="text-green-500" />
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                Copié !
+              </span>
+            </>
+          ) : (
+            <Share2 size={20} />
+          )}
         </button>
       </div>
     </div>

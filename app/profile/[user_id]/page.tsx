@@ -170,26 +170,36 @@ export default function PublicProfilePage() {
     }
 
     try {
-      // Check if conversation already exists
-      const { data: existingParticipations } = await supabase
+      // Check if conversation already exists - optimized query
+      const { data: myParticipations, error: myParticipationsError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', currentUser.id);
 
-      if (existingParticipations) {
-        for (const participation of existingParticipations) {
-          const { data: otherParticipant } = await supabase
-            .from('conversation_participants')
-            .select('user_id')
-            .eq('conversation_id', participation.conversation_id)
-            .neq('user_id', currentUser.id)
-            .single();
+      if (myParticipationsError) {
+        console.error('Error fetching my participations:', myParticipationsError);
+        throw new Error('Erreur lors de la vérification des conversations existantes');
+      }
 
-          if (otherParticipant && otherParticipant.user_id === userId) {
-            // Conversation exists, redirect to it
-            router.push(`/messages/${participation.conversation_id}`);
-            return;
-          }
+      if (myParticipations && myParticipations.length > 0) {
+        const conversationIds = myParticipations.map(p => p.conversation_id);
+
+        // Check if the other user is in any of these conversations
+        const { data: otherUserParticipations, error: otherUserError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', userId)
+          .in('conversation_id', conversationIds);
+
+        if (otherUserError) {
+          console.error('Error checking other user participations:', otherUserError);
+          throw new Error('Erreur lors de la vérification des conversations');
+        }
+
+        // If we found a common conversation, redirect to it
+        if (otherUserParticipations && otherUserParticipations.length > 0) {
+          router.push(`/messages/${otherUserParticipations[0].conversation_id}`);
+          return;
         }
       }
 
@@ -200,7 +210,10 @@ export default function PublicProfilePage() {
         .select()
         .single();
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error('Error creating conversation:', convError);
+        throw new Error('Erreur lors de la création de la conversation');
+      }
 
       // Add participants
       const { error: participantsError } = await supabase
@@ -210,13 +223,17 @@ export default function PublicProfilePage() {
           { conversation_id: conversation.id, user_id: userId }
         ]);
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        throw new Error('Erreur lors de l\'ajout des participants');
+      }
 
       // Redirect to conversation
       router.push(`/messages/${conversation.id}`);
     } catch (error) {
-      console.error('Error creating conversation:', error);
-      alert('Erreur lors de la création de la conversation');
+      console.error('Error in handleSendMessage:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du message';
+      alert(errorMessage);
     }
   };
 
