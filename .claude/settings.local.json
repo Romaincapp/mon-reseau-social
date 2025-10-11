@@ -25,7 +25,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(if exist .next rmdir /s /q .next)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFeat: Ajout système de messagerie, commentaires et améliorations UI\n\nNouvelles fonctionnalités :\n- Système de messagerie privée entre utilisateurs\n- Page de conversations avec liste des discussions\n- Interface de chat en temps réel\n- Système de commentaires sur les posts vocaux\n- Hook useRepost pour partager les posts\n- Composant Providers pour gérer le contexte global\n- Composant ScrollStack pour navigation fluide\n- Background Iridescence pour design moderne\n\nAméliorations :\n- Refonte pages d''authentification (login/register)\n- Amélioration profil utilisateur avec plus d''informations\n- Navigation bottom bar enrichie\n- Nouvelles fonctionnalités d''enregistrement vocal\n- Amélioration feed vocal avec interactions\n- Mise à jour des styles globaux\n- Ajout dépendances nécessaires (package.json)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(npm run supabase:status:*)"
     ],
     "deny": [],
     "ask": []

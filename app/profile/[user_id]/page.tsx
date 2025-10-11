@@ -203,33 +203,19 @@ export default function PublicProfilePage() {
         }
       }
 
-      // Create new conversation
-      const { data: conversation, error: convError } = await supabase
-        .from('conversations')
-        .insert({ is_group: false })
-        .select()
-        .single();
+      // Create new conversation using RPC function
+      const { data: conversationId, error: convError } = await supabase
+        .rpc('create_conversation_with_participants' as any, {
+          other_user_id: userId
+        });
 
       if (convError) {
         console.error('Error creating conversation:', convError);
         throw new Error('Erreur lors de la création de la conversation');
       }
 
-      // Add participants
-      const { error: participantsError } = await supabase
-        .from('conversation_participants')
-        .insert([
-          { conversation_id: conversation.id, user_id: currentUser.id },
-          { conversation_id: conversation.id, user_id: userId }
-        ]);
-
-      if (participantsError) {
-        console.error('Error adding participants:', participantsError);
-        throw new Error('Erreur lors de l\'ajout des participants');
-      }
-
       // Redirect to conversation
-      router.push(`/messages/${conversation.id}`);
+      router.push(`/messages/${conversationId}`);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi du message';
