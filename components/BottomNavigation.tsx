@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react';
-import { Home, Mic, User, LogIn, Search } from 'lucide-react';
+import { Home, Mic, User, LogIn, Search, MessageCircle } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationButton from './NotificationButton';
@@ -35,6 +35,14 @@ export default function BottomNavigation() {
     router.push('/search');
   };
 
+  const handleMessagesClick = (): void => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    router.push('/messages');
+  };
+
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -58,6 +66,17 @@ export default function BottomNavigation() {
         >
           <Search size={24} />
         </button>
+        {user && (
+          <button
+            onClick={handleMessagesClick}
+            className={`p-3 transition-colors duration-200 ${
+              pathname.startsWith('/messages') ? 'text-purple-500' : 'text-gray-400 hover:text-purple-500'
+            }`}
+            aria-label="Messages"
+          >
+            <MessageCircle size={24} />
+          </button>
+        )}
         <button
           onClick={handleMicClick}
           className={`p-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg transform hover:scale-105 transition-all duration-200 ${

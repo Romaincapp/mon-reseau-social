@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Play, Pause, LogOut, MoreVertical, Edit, Trash2, X } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Play, Pause, LogOut, MoreVertical, Edit, Trash2, X, Repeat2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLikes } from '@/hooks/useLikes';
 import { useTimestampLikes } from '@/hooks/useTimestampLikes';
+import { useRepost } from '@/hooks/useRepost';
 import AvatarWithWaveform from './AvatarWithWaveform';
 import InteractiveWaveform from './InteractiveWaveform';
 import StoriesCarousel from './StoriesCarousel';
@@ -45,6 +46,7 @@ interface Post {
   user_id: string | null;
   audio_url: string;
   duration: number;
+  caption?: string | null;
   likes_count: number | null;
   comments_count: number | null;
   reposts_count?: number | null;
@@ -83,6 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const { user } = useAuth();
   const { isLiked, likesCount, loading: likesLoading, toggleLike } = useLikes(post.id, post.likes_count ?? 0);
   const { timestampLikes, addTimestampLike } = useTimestampLikes(post.id, user?.id);
+  const { isReposted, repostsCount, loading: repostLoading, toggleRepost } = useRepost(post.id, post.reposts_count ?? 0, user?.id);
   const { currentTime, seekTo } = useAudioPlayer();
 
   const getRandomAvatar = (): string => {
@@ -220,6 +223,15 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       </div>
 
+      {/* Caption/Description */}
+      {post.caption && (
+        <div className="mb-4">
+          <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap break-words">
+            {post.caption}
+          </p>
+        </div>
+      )}
+
       {/* Tags avec couleurs personnalisées */}
       {post.post_tags && post.post_tags.length > 0 && (
         <div className="mb-4">
@@ -312,6 +324,26 @@ const PostCard: React.FC<PostCardProps> = ({
           >
             <MessageCircle size={20} />
             <span className="text-sm font-medium">{post.comments_count ?? 0}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (!user) {
+                router.push('/auth/login');
+                return;
+              }
+              toggleRepost();
+            }}
+            disabled={repostLoading}
+            className={`flex items-center space-x-2 transition-colors duration-200 ${
+              isReposted
+                ? 'text-green-500 hover:text-green-600'
+                : 'hover:text-green-500'
+            } ${!user ? 'opacity-60' : ''} ${repostLoading ? 'opacity-50' : ''}`}
+            aria-label="Repartager"
+          >
+            <Repeat2 size={20} />
+            <span className="text-sm font-medium">{repostsCount}</span>
           </button>
 
           <div className="flex items-center space-x-2 text-gray-500">
@@ -453,8 +485,7 @@ const VocalFeed: React.FC = () => {
   // Fonction pour gérer les commentaires
   const handleComment = (postId: string): void => {
     requireAuth(() => {
-      // TODO: Implémenter la logique de commentaire
-      console.log('Comment on post:', postId);
+      router.push(`/post/${postId}`);
     });
   };
 

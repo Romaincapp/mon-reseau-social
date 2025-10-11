@@ -2,9 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AudioPlayerProvider } from '../contexts/AudioPlayerContext';
-import { AuthProvider } from '../contexts/AuthContext';
-import GlobalAudioPlayer from '../components/GlobalAudioPlayer';
+import Providers from '../components/Providers';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <AudioPlayerProvider>
-            {children}
-            <GlobalAudioPlayer />
-          </AudioPlayerProvider>
-        </AuthProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

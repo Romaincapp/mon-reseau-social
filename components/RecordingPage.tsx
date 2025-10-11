@@ -34,6 +34,7 @@ const RecordingPage = () => {
   const [selectedFilter, setSelectedFilter] = useState<AudioFilter>(availableFilters[0]);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
+  const [caption, setCaption] = useState('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -269,6 +270,7 @@ const availableTags: Tag[] = [
     setAudioDuration(0);
     setIsPlaying(false);
     setSelectedTags([]);
+    setCaption('');
     if (audioRef.current) {
       audioRef.current.src = '';
     }
@@ -364,6 +366,7 @@ const availableTags: Tag[] = [
               user_id: user.id,
               audio_url: publicUrl,
               duration: duration,
+              caption: caption.trim() || null,
               likes_count: 0,
               comments_count: 0
             }
@@ -766,6 +769,26 @@ const availableTags: Tag[] = [
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Caption Input (optional) */}
+        {(audioBlob || importedFile) && publishType === 'post' && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 mb-6">
+            <h3 className="text-lg font-bold text-white mb-3">Description (optionnelle)</h3>
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              maxLength={500}
+              placeholder="Ajoutez une description à votre vocal... (max 500 caractères)"
+              className="w-full bg-white/10 text-white placeholder-white/50 border border-white/20 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              rows={4}
+            />
+            <div className="text-right mt-2">
+              <span className={`text-sm ${caption.length > 450 ? 'text-red-300' : 'text-white/60'}`}>
+                {caption.length}/500
+              </span>
+            </div>
           </div>
         )}
 

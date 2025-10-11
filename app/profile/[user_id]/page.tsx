@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, MessageCircle, Play, Pause, Calendar } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Play, Pause, Calendar, Mail, Mic, Eye, ThumbsUp, Clock } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAudioPlayer } from '../../../contexts/AudioPlayerContext';
@@ -9,6 +9,7 @@ import { supabase } from '../../../lib/supabase';
 import AvatarWithWaveform from '../../../components/AvatarWithWaveform';
 import BottomNavigation from '../../../components/BottomNavigation';
 import FollowButton from '../../../components/FollowButton';
+import ScrollStack from '../../../components/ScrollStack';
 
 interface Post {
   id: string;
@@ -162,6 +163,63 @@ export default function PublicProfilePage() {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!currentUser) {
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      // Check if conversation already exists
+      const { data: existingParticipations } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', currentUser.id);
+
+      if (existingParticipations) {
+        for (const participation of existingParticipations) {
+          const { data: otherParticipant } = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', participation.conversation_id)
+            .neq('user_id', currentUser.id)
+            .single();
+
+          if (otherParticipant && otherParticipant.user_id === userId) {
+            // Conversation exists, redirect to it
+            router.push(`/messages/${participation.conversation_id}`);
+            return;
+          }
+        }
+      }
+
+      // Create new conversation
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({ is_group: false })
+        .select()
+        .single();
+
+      if (convError) throw convError;
+
+      // Add participants
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .insert([
+          { conversation_id: conversation.id, user_id: currentUser.id },
+          { conversation_id: conversation.id, user_id: userId }
+        ]);
+
+      if (participantsError) throw participantsError;
+
+      // Redirect to conversation
+      router.push(`/messages/${conversation.id}`);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      alert('Erreur lors de la création de la conversation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-transparent">
@@ -234,8 +292,8 @@ export default function PublicProfilePage() {
             </div>
           )}
 
-          {/* Follow Button */}
-          <div className="mb-4">
+          {/* Action Buttons */}
+          <div className="mb-4 flex gap-3 justify-center">
             <FollowButton
               userId={userId}
               size="md"
@@ -245,6 +303,15 @@ export default function PublicProfilePage() {
                 fetchUserProfile();
               }}
             />
+            {currentUser && (
+              <button
+                onClick={handleSendMessage}
+                className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full font-semibold flex items-center gap-2 transition-all"
+              >
+                <Mail size={18} />
+                Message
+              </button>
+            )}
           </div>
 
           {/* Stats */}
@@ -271,6 +338,47 @@ export default function PublicProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Statistics with Scroll Stack */}
+      <div className="px-6 py-6">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">Statistiques</h3>
+        <ScrollStack
+          items={[
+            {
+              icon: Mic,
+              title: 'Vocaux publiés',
+              value: stats.postsCount,
+              description: `${profile.username || profile.full_name} a partagé ${stats.postsCount} message${stats.postsCount > 1 ? 's' : ''} vocal${stats.postsCount > 1 ? 'aux' : ''}`,
+              color: 'purple',
+              bgGradient: 'bg-gradient-to-br from-purple-500 to-purple-700'
+            },
+            {
+              icon: Eye,
+              title: 'Écoutes totales',
+              value: stats.totalViews,
+              description: `${stats.totalViews} écoute${stats.totalViews > 1 ? 's' : ''} cumulée${stats.totalViews > 1 ? 's' : ''} sur l'ensemble des vocaux`,
+              color: 'blue',
+              bgGradient: 'bg-gradient-to-br from-blue-500 to-blue-700'
+            },
+            {
+              icon: ThumbsUp,
+              title: 'J\'aime reçus',
+              value: stats.totalLikes,
+              description: `${stats.totalLikes} personne${stats.totalLikes > 1 ? 's ont' : ' a'} aimé les vocaux`,
+              color: 'pink',
+              bgGradient: 'bg-gradient-to-br from-pink-500 to-pink-700'
+            },
+            {
+              icon: Clock,
+              title: 'Durée totale',
+              value: formatDuration(stats.totalDuration),
+              description: `Temps total d'enregistrement partagé`,
+              color: 'indigo',
+              bgGradient: 'bg-gradient-to-br from-indigo-500 to-indigo-700'
+            }
+          ]}
+        />
       </div>
 
       {/* User Posts */}
