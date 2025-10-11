@@ -215,7 +215,7 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
         .getPublicUrl(filePath);
 
       // Create comment
-      const { error: commentError } = await supabase
+      const { data: commentData, error: commentError } = await supabase
         .from('comments')
         .insert({
           post_id: postId,
@@ -223,9 +223,37 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
           audio_url: publicUrl,
           duration: recordingTime,
           parent_comment_id: replyingTo
-        });
+        })
+        .select()
+        .single();
 
       if (commentError) throw commentError;
+
+      // Increment comments count on the post (only for top-level comments)
+      if (!replyingTo) {
+        const newCommentsCount = (post?.comments_count || 0) + 1;
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ comments_count: newCommentsCount })
+          .eq('id', postId);
+
+        if (updateError) {
+          console.error('Error updating comments count:', updateError);
+        }
+      }
+
+      // Create notification for post owner (if not commenting on own post)
+      if (post && post.user_id && post.user_id !== user.id && !replyingTo) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: post.user_id,
+            actor_id: user.id,
+            type: 'comment',
+            post_id: postId,
+            comment_id: commentData?.id
+          });
+      }
 
       // Refresh comments
       await fetchPostAndComments();

@@ -101,7 +101,7 @@ export function useLikes(postId: string, initialLikesCount: number = 0) {
           .eq('id', postId)
           .single()
 
-        if (post && post.user_id !== user.id) {
+        if (post && post.user_id && post.user_id !== user.id) {
           await supabase
             .from('notifications')
             .insert({
