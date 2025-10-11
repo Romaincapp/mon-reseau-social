@@ -46,9 +46,6 @@ export const useRepost = (postId: string, initialRepostsCount: number, userId?: 
 
         if (error) throw error;
 
-        // Decrement count
-        await supabase.rpc('decrement_reposts_count', { post_id: postId });
-
         setIsReposted(false);
         setRepostsCount(prev => Math.max(0, prev - 1));
       } else {
@@ -63,9 +60,6 @@ export const useRepost = (postId: string, initialRepostsCount: number, userId?: 
 
         if (error) throw error;
 
-        // Increment count
-        await supabase.rpc('increment_reposts_count', { post_id: postId });
-
         setIsReposted(true);
         setRepostsCount(prev => prev + 1);
 
@@ -76,7 +70,7 @@ export const useRepost = (postId: string, initialRepostsCount: number, userId?: 
           .eq('id', postId)
           .single();
 
-        if (postData && postData.user_id !== userId) {
+        if (postData && postData.user_id && postData.user_id !== userId) {
           await supabase
             .from('notifications')
             .insert({

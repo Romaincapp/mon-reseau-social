@@ -21,7 +21,9 @@ interface Message {
   content: string | null;
   audio_url: string | null;
   duration: number | null;
-  created_at: string;
+  created_at: string | null;
+  is_read?: boolean | null;
+  updated_at?: string | null;
   profiles?: Profile;
 }
 
@@ -311,7 +313,8 @@ const MessagingInterface: React.FC<MessagingInterfaceProps> = ({ conversationId 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatMessageTime = (dateString: string) => {
+  const formatMessageTime = (dateString: string | null) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };

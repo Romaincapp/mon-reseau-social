@@ -24,22 +24,25 @@ interface Comment {
   audio_url: string | null;
   duration: number | null;
   parent_comment_id: string | null;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
+  likes_count: number | null;
+  created_at: string | null;
+  updated_at: string | null;
   profiles?: Profile | null;
   replies?: Comment[];
 }
 
 interface Post {
   id: string;
-  user_id: string;
+  user_id: string | null;
   audio_url: string;
   duration: number;
   caption?: string | null;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
+  likes_count: number | null;
+  comments_count: number | null;
+  reposts_count?: number | null;
+  views_count?: number | null;
+  created_at: string | null;
+  updated_at?: string | null;
   profiles?: Profile | null;
   post_tags?: Array<{
     tags: {
@@ -224,9 +227,6 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
 
       if (commentError) throw commentError;
 
-      // Update post comments count
-      await supabase.rpc('increment_comments_count', { post_id: postId });
-
       // Refresh comments
       await fetchPostAndComments();
 
@@ -277,7 +277,8 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatTimeAgo = (dateString: string) => {
+  const formatTimeAgo = (dateString: string | null) => {
+    if (!dateString) return '';
     const now = new Date();
     const date = new Date(dateString);
     const diffInMs = now.getTime() - date.getTime();
@@ -434,7 +435,7 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
                       <div className="flex items-center gap-4 text-gray-500 text-sm">
                         <button className="hover:text-red-500 flex items-center gap-1">
                           <Heart size={14} />
-                          <span>{comment.likes_count}</span>
+                          <span>{comment.likes_count || 0}</span>
                         </button>
                         <button
                           onClick={() => setReplyingTo(comment.id)}
@@ -452,7 +453,7 @@ const PostCommentsPage: React.FC<PostCommentsPageProps> = ({ postId }) => {
                               <AvatarWithWaveform
                                 avatar={reply.profiles?.avatar_url || '👤'}
                                 isPlaying={playingCommentId === reply.id}
-                                size="xs"
+                                size="sm"
                                 avatarUrl={reply.profiles?.avatar_url || undefined}
                               />
                               <div className="flex-1">
