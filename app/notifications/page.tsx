@@ -27,15 +27,21 @@ type Notification = {
 
 export default function NotificationsPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      // Wait for auth to finish loading
+      if (authLoading) {
+        console.log('[Notifications] Auth still loading, waiting...')
+        return
+      }
+
       // Only fetch if user is authenticated
       if (!user) {
-        console.log('[Notifications] No user, redirecting to login')
+        console.log('[Notifications] No user after auth loaded, redirecting to login')
         router.push('/auth/login')
         return
       }
@@ -71,7 +77,7 @@ export default function NotificationsPage() {
     }
 
     fetchNotifications()
-  }, [user, router])
+  }, [user, router, authLoading])
 
   const markAsRead = async (notificationId: string) => {
     // Marquer comme lu localement immédiatement
@@ -175,7 +181,7 @@ export default function NotificationsPage() {
     return `Il y a ${days}j`
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-2xl mx-auto bg-white min-h-screen">
@@ -185,7 +191,10 @@ export default function NotificationsPage() {
             </button>
             <h1 className="text-xl font-bold">Notifications</h1>
           </div>
-          <div className="p-8 text-center text-gray-500">Chargement...</div>
+          <div className="p-8 text-center text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-2"></div>
+            Chargement...
+          </div>
         </div>
       </div>
     )
