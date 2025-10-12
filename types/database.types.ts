@@ -487,6 +487,7 @@ export type Database = {
       posts: {
         Row: {
           audio_url: string
+          caption: string | null
           comments_count: number | null
           created_at: string | null
           duration: number
@@ -498,6 +499,7 @@ export type Database = {
         }
         Insert: {
           audio_url: string
+          caption?: string | null
           comments_count?: number | null
           created_at?: string | null
           duration: number
@@ -509,6 +511,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string
+          caption?: string | null
           comments_count?: number | null
           created_at?: string | null
           duration?: number
