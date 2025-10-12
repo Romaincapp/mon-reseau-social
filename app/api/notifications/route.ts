@@ -1,19 +1,24 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient()
 
+    // Log pour debugging
+    console.log('[API Notifications] Headers:', Object.fromEntries(request.headers))
+
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
+    console.log('[API Notifications] User from getUser:', user?.id, 'Error:', authError?.message)
+
     if (authError) {
-      console.error('Auth error in notifications API:', authError)
+      console.error('[API Notifications] Auth error:', authError)
       return NextResponse.json({ error: 'Authentication error', details: authError.message }, { status: 401 })
     }
 
     if (!user) {
-      console.error('No user found in notifications API')
+      console.error('[API Notifications] No user found')
       return NextResponse.json({ error: 'Unauthorized - No user session' }, { status: 401 })
     }
 
