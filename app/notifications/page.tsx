@@ -40,7 +40,12 @@ export default function NotificationsPage() {
       }
 
       try {
-        const response = await fetch('/api/notifications')
+        const response = await fetch('/api/notifications', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
         if (response.ok) {
           const data = await response.json()
           setNotifications(data)
@@ -67,6 +72,7 @@ export default function NotificationsPage() {
     // Envoyer la requête au serveur
     await fetch('/api/notifications', {
       method: 'PATCH',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notificationIds: [notificationId] }),
     })
@@ -86,6 +92,7 @@ export default function NotificationsPage() {
       // Envoyer la requête au serveur
       await fetch('/api/notifications', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notificationIds: unreadIds }),
       })
