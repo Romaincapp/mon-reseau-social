@@ -19,16 +19,16 @@ interface Message {
   id: string;
   content: string | null;
   audio_url: string | null;
-  created_at: string;
+  created_at: string | null;
   sender_id: string;
 }
 
 interface Conversation {
   id: string;
-  is_group: boolean;
+  is_group: boolean | null;
   name: string | null;
-  updated_at: string;
-  otherParticipant?: Profile;
+  updated_at: string | null;
+  otherParticipant?: Profile | null;
   lastMessage?: Message;
   unreadCount: number;
 }
@@ -95,36 +95,59 @@ const ConversationsListPage: React.FC = () => {
       if (messagesError) throw messagesError;
 
       // Process the data
-      const processedConversations = conversationsData?.map(conv => {
+      const processedConversations: Conversation[] = (conversationsData || []).map(conv => {
         // Find other participant (for 1-to-1 conversations)
-        const otherParticipant = allParticipants
-          ?.filter(p => p.conversation_id === conv.id && p.user_id !== user.id)
-          .map(p => p.profiles)?.[0] || null;
+        const participantData = allParticipants
+          ?.filter((p: any) => p.conversation_id === conv.id && p.user_id !== user.id)
+          ?.[0];
+
+        const otherParticipant: Profile | null = participantData?.profiles
+          ? {
+              id: participantData.profiles.id,
+              username: participantData.profiles.username,
+              full_name: participantData.profiles.full_name,
+              avatar_url: participantData.profiles.avatar_url
+            }
+          : null;
 
         // Find last message for this conversation
-        const lastMessage = allMessages?.find(m => m.conversation_id === conv.id) || null;
+        const messageData = allMessages?.find((m: any) => m.conversation_id === conv.id);
+        const lastMessage: Message | undefined = messageData
+          ? {
+              id: messageData.id,
+              content: messageData.content,
+              audio_url: messageData.audio_url,
+              created_at: messageData.created_at,
+              sender_id: messageData.sender_id
+            }
+          : undefined;
 
         // Find last_read_at for this user
         const myParticipation = myParticipations?.find(p => p.conversation_id === conv.id);
         const lastReadAt = myParticipation?.last_read_at || '1970-01-01';
 
         // Count unread messages
-        const unreadCount = allMessages?.filter(m =>
+        const unreadCount = allMessages?.filter((m: any) =>
           m.conversation_id === conv.id &&
           new Date(m.created_at) > new Date(lastReadAt)
         ).length || 0;
 
         return {
-          ...conv,
+          id: conv.id,
+          is_group: conv.is_group,
+          name: conv.name,
+          updated_at: conv.updated_at,
           otherParticipant,
           lastMessage,
           unreadCount
         };
-      }) || [];
+      });
 
-      setConversations(processedConversations.sort((a, b) =>
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      ));
+      setConversations(processedConversations.sort((a, b) => {
+        const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return dateB - dateA;
+      }));
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
@@ -132,7 +155,8 @@ const ConversationsListPage: React.FC = () => {
     }
   };
 
-  const formatTime = (dateString: string) => {
+  const formatTime = (dateString: string | null) => {
+    if (!dateString) return '';
     const now = new Date();
     const date = new Date(dateString);
     const diffInMs = now.getTime() - date.getTime();
