@@ -35,12 +35,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes - redirect to login if not authenticated
-  if (!user && request.nextUrl.pathname.startsWith('/notifications')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
-  }
+  // Log pour debugging
+  console.log('[Middleware]', request.nextUrl.pathname, '- User:', user?.id || 'null')
 
   // Refresh session if user is logged in
   if (user) {
