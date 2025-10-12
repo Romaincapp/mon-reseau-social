@@ -170,10 +170,10 @@ export default function PublicProfilePage() {
     }
 
     try {
-      // Check if conversation already exists - optimized query
+      // Check if a 1-to-1 conversation already exists between these two users
       const { data: myParticipations, error: myParticipationsError } = await supabase
         .from('conversation_participants')
-        .select('conversation_id')
+        .select('conversation_id, conversations!inner(is_group)')
         .eq('user_id', currentUser.id);
 
       if (myParticipationsError) {
@@ -182,28 +182,46 @@ export default function PublicProfilePage() {
       }
 
       if (myParticipations && myParticipations.length > 0) {
-        const conversationIds = myParticipations.map(p => p.conversation_id);
+        // Filter only 1-to-1 conversations (not groups)
+        const oneToOneConversationIds = myParticipations
+          .filter((p: any) => p.conversations && !p.conversations.is_group)
+          .map((p: any) => p.conversation_id);
 
-        // Check if the other user is in any of these conversations
-        const { data: otherUserParticipations, error: otherUserError } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('user_id', userId)
-          .in('conversation_id', conversationIds);
+        if (oneToOneConversationIds.length > 0) {
+          // Check if the other user is in any of these 1-to-1 conversations
+          const { data: otherUserParticipations, error: otherUserError } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id')
+            .eq('user_id', userId)
+            .in('conversation_id', oneToOneConversationIds);
 
-        if (otherUserError) {
-          console.error('Error checking other user participations:', otherUserError);
-          throw new Error('Erreur lors de la vérification des conversations');
-        }
+          if (otherUserError) {
+            console.error('Error checking other user participations:', otherUserError);
+            throw new Error('Erreur lors de la vérification des conversations');
+          }
 
-        // If we found a common conversation, redirect to it
-        if (otherUserParticipations && otherUserParticipations.length > 0) {
-          router.push(`/messages/${otherUserParticipations[0].conversation_id}`);
-          return;
+          // If we found a common 1-to-1 conversation, verify it only has 2 participants
+          if (otherUserParticipations && otherUserParticipations.length > 0) {
+            const commonConvId = otherUserParticipations[0].conversation_id;
+
+            // Verify this conversation has exactly 2 participants
+            const { count, error: countError } = await supabase
+              .from('conversation_participants')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', commonConvId);
+
+            if (countError) {
+              console.error('Error counting participants:', countError);
+            } else if (count === 2) {
+              // Perfect! This is a 1-to-1 conversation between these exact 2 users
+              router.push(`/messages/${commonConvId}`);
+              return;
+            }
+          }
         }
       }
 
-      // Create new conversation using RPC function
+      // No existing conversation found - create new one using RPC function
       const { data: conversationId, error: convError } = await supabase
         .rpc('create_conversation_with_participants' as any, {
           other_user_id: userId
@@ -214,7 +232,7 @@ export default function PublicProfilePage() {
         throw new Error('Erreur lors de la création de la conversation');
       }
 
-      // Redirect to conversation
+      // Redirect to the new conversation
       router.push(`/messages/${conversationId}`);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
