@@ -35,9 +35,12 @@ export default function NotificationsPage() {
     const fetchNotifications = async () => {
       // Only fetch if user is authenticated
       if (!user) {
-        setLoading(false)
+        console.log('[Notifications] No user, redirecting to login')
+        router.push('/auth/login')
         return
       }
+
+      console.log('[Notifications] Fetching notifications for user:', user.id)
 
       try {
         const response = await fetch('/api/notifications', {
@@ -46,15 +49,22 @@ export default function NotificationsPage() {
             'Content-Type': 'application/json',
           },
         })
+
+        console.log('[Notifications] Response status:', response.status)
+
         if (response.ok) {
           const data = await response.json()
+          console.log('[Notifications] Loaded', data.length, 'notifications')
           setNotifications(data)
         } else if (response.status === 401) {
+          console.error('[Notifications] 401 Unauthorized, redirecting to login')
           // User not authenticated, redirect to login
           router.push('/auth/login')
+        } else {
+          console.error('[Notifications] Error:', response.status, await response.text())
         }
       } catch (error) {
-        console.error('Error fetching notifications:', error)
+        console.error('[Notifications] Fetch error:', error)
       } finally {
         setLoading(false)
       }
